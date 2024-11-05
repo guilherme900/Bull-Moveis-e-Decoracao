@@ -2,36 +2,42 @@ import React, { useEffect, useState } from 'react';
 import { useRouter,useLocalSearchParams  } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Alert, Text, Image,TouchableOpacity, View } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase'; // Supondo que você tenha esta função
-import {url} from '@/app/login';
-
+import {readConfigFile} from '@/app/login';
 
 const MyPurchases = () => {
     const router = useRouter();
     const { tokey } = useLocalSearchParams();
     const [compras, setCompras] = useState<UserDatabase[]>([]);
+    const [url, setUrl] = useState<string>('');
     const UserDatabase = useUserDatabase(); 
 
-
+    useEffect(() => {
+        const fetchConfigUrl = async () => {
+          const configUrl = await readConfigFile();
+          setUrl(configUrl);
+        };
+        fetchConfigUrl();
+      },[]);
     const handleRegister = async () => {
-    try {
-        const response = await fetch(url+'mcompras', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ tokey}),
-        });
-        const data = await response.json();
-        if (response.ok) {
-            console.log('')
-        } else {
-            console.log(data.message)
-        }
+        try {
+            const response = await fetch(url+'mcompras', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tokey}),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                console.log('')
+            } else {
+                console.log('myPurch.data',data.message)
+            }
 
-    } catch (error) {
-        Alert.alert('Erro', 'Erro ao conectar ao servidor');
-    }
-};
+        } catch (error) {
+            Alert.alert('Erro', 'Erro ao conectar ao servidor');
+        }
+    };
     useEffect(() => {
         const fetchCompras = async () => {
             handleRegister()//const response =  UserDatabase.getCompras(); // Suponha que você tenha uma função que busque as compras
@@ -44,7 +50,7 @@ const MyPurchases = () => {
     const renderCompraItem = ({ item }: { item: UserDatabase }) => (
         <TouchableOpacity style={styles.itemContainer}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemPrice}>R$ {item.id.toFixed(2)}</Text>
+            <Text style={styles.itemPrice}>R$ {item.use.toFixed(2)}</Text>
         </TouchableOpacity>
     );
 
@@ -59,7 +65,7 @@ const MyPurchases = () => {
             </View>
             <FlatList
                 data={compras}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item) => String(item.tokey)}
                 renderItem={renderCompraItem}
                 contentContainerStyle={styles.listContainer}
                 ListEmptyComponent={<View style={styles.nce}><Text style={styles.emptyMessage}>Nenhuma compra encontrada</Text></View>}
