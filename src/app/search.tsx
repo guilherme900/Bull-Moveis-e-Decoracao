@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, View, Image, TextInput, Keyboard, FlatList, TouchableOpacity, Text } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase';
+import {readConfigFile} from '@/app/login';
 
 const SearchScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -9,6 +10,16 @@ const SearchScreen = () => {
     const inputRef = useRef<TextInput>(null);
     const router = useRouter();
     const UserDatabase = useUserDatabase();
+    const [url, setUrl] = useState<string>('');
+    
+    useEffect(() => {
+        const fetchConfigUrl = async () => {
+          const configUrl = await readConfigFile();
+          setUrl(configUrl);
+        };
+        fetchConfigUrl();
+      },[]);
+  
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -61,7 +72,7 @@ const SearchScreen = () => {
 
             <FlatList
                 data={results}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item) => String(item.use)}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.resultItem} onPress={() => handleSelectResult(item)}>
                         <Text>{item.name}</Text>

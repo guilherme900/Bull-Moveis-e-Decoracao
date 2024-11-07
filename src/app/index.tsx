@@ -4,7 +4,7 @@ import {SafeAreaView,StyleSheet,View,ScrollView,Text,Image,TouchableOpacity,Moda
 import { Card } from 'react-native-paper';
 import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
-
+import {readConfigFile} from '@/app/login';
 
 export default function Index(){
   useEffect(() => {
@@ -21,7 +21,16 @@ export default function Index(){
   const [logado, setLogado] = useState(false);
   const [contas, setContas] = useState<UserDatabase[]>([])
   const [cart  ,   setCart] = useState(false);
-  const [produto,setproduto] = useState(false); 
+  const [produto,setproduto] = useState(false);     
+  const [url, setUrl] = useState<string>('');
+  
+  useEffect(() => {
+      const fetchConfigUrl = async () => {
+        const configUrl = await readConfigFile();
+        setUrl(configUrl);
+      };
+      fetchConfigUrl();
+    },[]);
 
   const logout = async () => {
     await UserDatabase.delet(tokey);

@@ -2,6 +2,7 @@
   "expo": {
     "name": "BULLMD",
     "slug": "projeto_co",
+    "scheme":"BULLMD",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

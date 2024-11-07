@@ -2,11 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Text, TouchableOpacity, View, Image, Button } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase'; // Ensure this path is correct
+import {readConfigFile} from '@/app/login';
 
 const Cart = () => {
     const router = useRouter();
     const [cartItems, setCartItems] = useState<UserDatabase[]>([]);
     const UserDatabase = useUserDatabase();
+    const [url, setUrl] = useState<string>('');
+    
+    useEffect(() => {
+        const fetchConfigUrl = async () => {
+          const configUrl = await readConfigFile();
+          setUrl(configUrl);
+        };
+        fetchConfigUrl();
+      },[]);
 
     useEffect(() => {
         const fetchCartItems = async () => {
@@ -25,13 +35,13 @@ const Cart = () => {
     const renderCartItem = ({ item }: { item: UserDatabase }) => (
         <View style={styles.itemContainer}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemPrice}>R$ {item.id.toFixed(2)}</Text>
+            <Text style={styles.itemPrice}>R$ {item.use.toFixed(2)}</Text>
             <TouchableOpacity
                 style={styles.removeButton}
                 onPress={() => {
                     // Logic to remove item from cart
-                    //UserDatabase.removeItemFromCart(item.id);
-                    setCartItems(cartItems.filter(i => i.id !== item.id));
+                    //UserDatabase.removeItemFromCart(item.use);
+                    setCartItems(cartItems.filter(i => i.use !== item.use));
                 }}
             >
                 <Text style={styles.removeButtonText}>Remover</Text>
@@ -50,7 +60,7 @@ const Cart = () => {
             </View>
             <FlatList
                 data={cartItems}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item) => String(item.use)}
                 renderItem={renderCartItem}
                 contentContainerStyle={styles.listContainer}
                 ListEmptyComponent={

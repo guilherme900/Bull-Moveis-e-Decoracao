@@ -2,12 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Text, TouchableOpacity, View, Image } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase'; // Ensure this path is correct
+import {readConfigFile} from '@/app/login';
 
 const Favorites = () => {
     const router = useRouter();
     const [favorites, setFavorites] = useState<UserDatabase[]>([]);
     const UserDatabase = useUserDatabase();
-
+    const [url, setUrl] = useState<string>('');
+    
+    useEffect(() => {
+        const fetchConfigUrl = async () => {
+          const configUrl = await readConfigFile();
+          setUrl(configUrl);
+        };
+        fetchConfigUrl();
+      },[]);
     useEffect(() => {
         const fetchFavorites = async () => {
             //const response = await UserDatabase.getFavorites(); // Assume this function fetches favorite items
@@ -21,7 +30,7 @@ const Favorites = () => {
     const renderFavoriteItem = ({ item }: { item: UserDatabase }) => (
         <TouchableOpacity style={styles.itemContainer}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemPrice}>R$ {item.id.toFixed(2)}</Text>
+            <Text style={styles.itemPrice}>R$ {item.use.toFixed(2)}</Text>
         </TouchableOpacity>
     );
 
@@ -36,7 +45,7 @@ const Favorites = () => {
             </View>
             <FlatList
                 data={favorites}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item) => String(item.use)}
                 renderItem={renderFavoriteItem}
                 contentContainerStyle={styles.listContainer}
                 ListEmptyComponent={
