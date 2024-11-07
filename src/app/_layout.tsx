@@ -35,8 +35,18 @@ const [loading, setLoading] = useState<boolean>(true);
     }
   };
 
-  useEffect(() => {
-    getUrl()
+  useEffect(() => {  
+    const fetchData = async () => {
+    try {
+      await getUrl();
+    } catch (error) {
+      console.error('Erro ao carregar URL:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
   }, []);
 
   if(loading)return<LoadingScreen/>
