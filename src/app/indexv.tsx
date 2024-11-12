@@ -1,7 +1,7 @@
 import {Link,router} from "expo-router"
 import React, {useState,useEffect} from 'react';
-import {SafeAreaView,StyleSheet,View,ScrollView,Pressable ,PressableProps,Text,Image,TouchableOpacity,Modal,BackHandler,FlatList} from 'react-native';
-import { Card } from 'react-native-paper';
+import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Pressable ,PressableProps,Text,Image,TouchableOpacity,Modal,BackHandler,FlatList} from 'react-native';
+import { Button, Card } from 'react-native-paper';
 import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import {readConfigFile} from '@/app/login';
@@ -20,10 +20,18 @@ export default function Index(){
   const [login ,  setLogin] = useState(false);
   const [logado, setLogado] = useState(false);
   const [contas, setContas] = useState<UserDatabase[]>([])
-  const [cart  ,   setCart] = useState(false);
-  const [produto,setproduto] = useState(false); 
+  const [produtos,setProdutos] = useState<Produto[]>([]); 
   const [url, setUrl] = useState<string>('');
   
+  type Produto = {
+    name: string;
+    description: string;
+    quantity: number;
+    value: number;
+    images: string[];  // Assumindo que as imagens são URLs ou base64 strings
+  };
+  
+
   useEffect(() => {
       const fetchConfigUrl = async () => {
         const configUrl = await readConfigFile();
@@ -31,6 +39,12 @@ export default function Index(){
       };
       fetchConfigUrl();
     },[]);
+    useEffect(() => {
+      // Só chama getprodutos após o tokey ser atualizado
+      if (tokey) {
+          getprodutos();
+      }
+  }, [tokey]);
 
   const logout = async () => {
     await UserDatabase.delet(tokey);
@@ -61,20 +75,102 @@ export default function Index(){
       setuser ('faça login')
     }
   }
-  const Conteudo =()=>{
-    return( 
-      <View style={{justifyContent:'center',alignItems:'center'}}>
-    <Text style={{fontSize:20}}>
-      você não tem produtos anunciadao
-    </Text>
-    <TouchableOpacity style={{padding:10,alignItems:'center'}}>
-      <Text style={{fontSize:20}}>
-        novo produto
-      </Text>
-    </TouchableOpacity>
-    </View>
-    )
-  }
+  const getprodutos = async () => {
+    
+    try {
+      const formData = { tokey };
+  
+      const uploadResponse = await fetch(url + 'getproducts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json: Produto[] = await uploadResponse.json(); // Tipando a resposta como um array de Produto
+  
+      if (uploadResponse.ok) {
+        // Armazena os dados no estado
+        setProdutos(json); // Supondo que você tenha um estado de produtos do tipo Produto[]
+      } else {
+        console.error('Erro ao obter produtos:', json);
+        Alert.alert('Erro', 'Erro ao carregar produtos.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar ao servidor:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  };
+
+  
+
+
+  const Conteudo = () => {
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedProduto, setSelectedProduto] = useState(null);
+  
+    const handleProdutoPress = (produto) => {
+      setSelectedProduto(produto);
+      setModalVisible(true);
+    };
+  
+    return (
+      <View style={{ flex: 1 }}>
+                <View style={{marginVertical: 30,alignItems:'center'}}>
+          <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
+            <View style={styles.botonNp}>
+              <Text style={{fontSize:20}}>
+                novo produto
+              </Text>
+            </View>
+          </TouchableOpacity>
+          
+        </View>  
+        <View style={stylesp.produtosContainer}>
+          {produtos.length === 0 ? (
+            <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
+          ) : (
+            <ScrollView>
+            {produtos.map((produto, index) => (
+              <View key={index} style={stylesp.produtoCard}>
+                <TouchableOpacity onPress={() => handleProdutoPress(produto)} style={stylesp.produtoImageContainer}>
+                  <Image source={{ uri: produto.images[0] }} style={stylesp.produtoImage} />
+                </TouchableOpacity>
+                <Text style={stylesp.produtoName}>{produto.name}</Text>
+                <Text style={stylesp.produtoValue}>Preço: R${produto.value.toFixed(2)}</Text>
+                
+              </View>
+            ))}
+          </ScrollView>
+        )}
+        </View>
+  
+        {/* Modal para visualização do produto */}
+        {selectedProduto && (
+          <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
+            <View style={stylesp.modalContainer}>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={stylesp.closeModalButton}>
+                <Text style={stylesp.closeModalText}>Fechar</Text>
+              </TouchableOpacity>
+              <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
+              <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
+              <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
+              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quality}</Text>
+              <Text style={stylesp.modalProductName}>Imagems:</Text>
+              <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
+                {selectedProduto.images.map((image, idx) => (
+                  <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
+                ))}
+              </ScrollView>
+            </View>
+          </Modal>
+        )}
+      </View>
+    );
+  };
+
+  
   perfil()
   return (
     <SafeAreaView style={styles.container}>
@@ -130,7 +226,7 @@ export default function Index(){
                 renderItem={({item}) => <Rconta data={item} onPress={() =>{UserDatabase.update(String(item.tokey));Contas()}}/>}
                 contentContainerStyle={{gap:16}}
               />
-              <TouchableOpacity style={styles.botonNC} onPress={() =>{router.push('/login')}}>
+              <TouchableOpacity style={styles.botonNC} onPress={() =>{router.push('/register')}}>
                 <Text style={{color:'#10d010',fontSize:30}}>
                   + Nova Conta
                 </Text>
@@ -159,9 +255,7 @@ export default function Index(){
           </TouchableOpacity>
         </View>
       </View>
-      <View>
       <Conteudo/>
-      </View>
     </SafeAreaView>
   );
   
@@ -285,7 +379,133 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     gap:12,
     flexDirection:"row"
+  },
+  botonNp:{
+    borderRadius:30,
+    backgroundColor:'#eee',
+    justifyContent:'center',
+    alignItems:'center',
+    height:48,
+    width:160
   }
+});
+
+const stylesp = StyleSheet.create({
+  produtosContainer: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  noProductText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  produtoCard: {
+    width: 300,
+    height:350,
+    alignItems:'center',
+    marginVertical: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  produtoName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  produtoDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  produtoQuantity: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  produtoValue: {
+    fontSize: 16,
+    color: '#0f0',
+    marginBottom: 10,
+  },
+  produtoImageContainer: {
+    width: 250,
+    height: 250,
+    marginTop: 10,
+  },
+  produtoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  closeModalButton: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#ff4c4c',
+    borderRadius: 10,
+  },
+  closeModalText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  modalProductName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalProductDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  modalProductPrice: {
+    fontSize: 18,
+    color: '#0f0',
+    marginBottom: 20,
+  },
+  modalImagesContainer: {
+    marginBottom: 20,
+  },
+  modalProductImage: {
+    width: 200,
+    height: 200,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  addToCartButton: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#0f0',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  addToCartText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  buyButton: {
+    padding: 15,
+    backgroundColor: '#0a74da',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  buyButtonText: {
+    fontSize: 18,
+    color: '#fff',
+  },
 });
 
 

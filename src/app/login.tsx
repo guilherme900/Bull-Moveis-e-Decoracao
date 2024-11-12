@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useUserDatabase } from '@/database/useUserDatabase';
-import { SafeAreaView, StyleSheet, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Text, TextInput,BackHandler, TouchableOpacity, Alert } from 'react-native';
 import LoadingScreen from '@/components/LoadingScreen';
 import * as FileSystem from 'expo-file-system';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -29,6 +29,12 @@ export async function readConfigFile() {
 }
 
 export default function Login() {
+  useEffect(() => {
+    const backAction = () => {router.push('/');return true;};
+    const backHandler = BackHandler.addEventListener('hardwareBackPress',backAction,);
+    return () => backHandler.remove();
+  }, []);
+
   const [email, setEmail] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
@@ -116,6 +122,10 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity style={styles.button1} onPress={() => { router.push('/register'); }}>
+          <Text style={styles.buttonText1}>Esqueci minha senha</Text>
+        </TouchableOpacity>
+        <View style={{height:20}}/>
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>

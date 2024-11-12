@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter,useLocalSearchParams  } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Alert, Text, Image,TouchableOpacity, View } from 'react-native';
-import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase'; // Supondo que você tenha esta função
+import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 
 const MyPurchases = () => {
@@ -40,7 +40,7 @@ const MyPurchases = () => {
     };
     useEffect(() => {
         const fetchCompras = async () => {
-            handleRegister()//const response =  UserDatabase.getCompras(); // Suponha que você tenha uma função que busque as compras
+            handleRegister()//const response =  UserDatabase.getCompras();
              setCompras([]);
         };
 

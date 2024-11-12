@@ -149,9 +149,13 @@ export default function Home(){
                 teste lo
             </Text>
         </Link>
-        
+        <Link href="/getImagem">
+            <Text style={{fontSize:18}}>
+                teste ima
+            </Text>
+        </Link>
     
-      <Button title="Pick an image from camera roll" onPress={pickImage} />
+      <Button title="Escolha uma imagem do rolo da câmera" onPress={pickImage} />
       {image && <Image source={{ uri: image }} style={{width: 200,height: 200,}} />}
     
     </SafeAreaView>

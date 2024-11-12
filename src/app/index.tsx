@@ -120,7 +120,7 @@ export default function Index(){
                 )}
                 contentContainerStyle={{ gap: 16 }}
               />
-              <TouchableOpacity style={styles.botonNC} onPress={() => { router.push('/login') }}>
+              <TouchableOpacity style={styles.botonNC} onPress={() => { router.push('/register') }}>
                 <Text style={{ color: '#10d010', fontSize: 30 }}>+ Nova Conta</Text>
               </TouchableOpacity>
             </View>

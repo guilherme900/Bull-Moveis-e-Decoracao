@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Text, TouchableOpacity, View, Image } from 'react-native';
-import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase'; // Ensure this path is correct
+import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 
 const History = () => {
@@ -19,7 +19,7 @@ const History = () => {
       },[]);
     useEffect(() => {
         const fetchHistory = async () => {
-            //const response = await UserDatabase.getHistory(); // Assume this function fetches historical data
+            //const response = await UserDatabase.getHistory();
             setHistoryItems([]);
         };
 

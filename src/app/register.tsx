@@ -1,12 +1,18 @@
 import React, { useState,useEffect } from 'react';
 import{useRouter}  from 'expo-router';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { SafeAreaView, StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Text, TextInput, TouchableOpacity,BackHandler, Alert, Switch } from 'react-native';
 import LoadingScreen from '@/components/LoadingScreen';
 import {useUserDatabase} from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 
 export default function Register() {
+    useEffect(() => {
+      const backAction = () => {router.push('/');return true;};
+      const backHandler = BackHandler.addEventListener('hardwareBackPress',backAction,);
+      return () => backHandler.remove();
+    }, []);
+  
     const UserDatabase = useUserDatabase()
 
     const [name, setName] = useState('');
@@ -59,7 +65,7 @@ export default function Register() {
             return false;
         }
         if (!validateEmail(email)) {
-            Alert.alert('Erro', 'E-mail inválido.');
+            Alert.alert('Erro', 'Formato de e-mail inválido.');
             return false;
         }
         if (!isSeller){
@@ -176,6 +182,11 @@ export default function Register() {
                 <TouchableOpacity style={styles.button} onPress={handleRegister}>
                     <Text style={styles.buttonText}>Registrar</Text>
                 </TouchableOpacity>
+                
+                <Text>Já Tem Conta </Text>
+                <TouchableOpacity style={styles.button1} onPress={() => { router.push('/login'); }}>
+                    <Text style={styles.buttonText1}>Faça Login</Text>
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
@@ -236,5 +247,19 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    button1: {
+      backgroundColor: '#fff',
+      height: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderColor: '#10d010',
+      borderWidth: 3,
+      borderRadius: 5,
+    },
+    buttonText1: {
+      color: '#10d010',
+      fontSize: 18,
+      fontWeight: 'bold',
     },
 });
