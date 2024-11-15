@@ -1,36 +1,27 @@
-import {Link,router} from "expo-router"
+import {router} from "expo-router"
 import React, {useState,useEffect} from 'react';
-import {SafeAreaView,StyleSheet,View,ScrollView,Alert,Text,Image,TouchableOpacity,Modal,BackHandler,FlatList} from 'react-native';
-import { Card } from 'react-native-paper';
-import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
+import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Text,Image,TouchableOpacity,Modal,FlatList} from 'react-native';
+import {useUserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import {readConfigFile} from '@/app/login';
 
 export default function Index(){
-  useEffect(() => {
-    const backAction = () => {BackHandler.exitApp();return true;};
-    const backHandler = BackHandler.addEventListener('hardwareBackPress',backAction,);
-    return () => backHandler.remove();
-  }, []);
 
+  const UserDatabase = useUserDatabase()
+  const [tokey,setTokey] = useState('')
+  const [option, setOption] = useState(false);
+  const [login ,  setLogin] = useState(false);
+
+  const [produtos,setProdutos] = useState<Produto[]>([]); 
+  const [url, setUrl] = useState<string>('');
+  
   type Produto = {
     name: string;
     description: string;
     quantity: number;
     value: number;
-    images: string[];  // Assumindo que as imagens são URLs ou base64 strings
+    images: string[];  
   };
-  const UserDatabase = useUserDatabase()
-  const [tokey,setTokey] = useState('')
-  const [user,setuser]=useState('faça login');
-  const [option, setOption] = useState(false);
-  const [login ,  setLogin] = useState(false);
-  const [logado, setLogado] = useState(false);
-  const [contas, setContas] = useState<UserDatabase[]>([])
-  const [produtos,setProdutos] = useState<Produto[]>([]); 
-  const [cart  ,   setCart] = useState(false);
-  const [produto,setproduto] = useState(false);     
-  const [url, setUrl] = useState<string>('');
   
   useEffect(() => {
       const fetchConfigUrl = async () => {
@@ -40,23 +31,22 @@ export default function Index(){
       fetchConfigUrl();
     },[]);
 
-  const logout = async () => {
-    await UserDatabase.delet(tokey);
-    const response = await UserDatabase.serchByuse(0)||[]
-    if(response[0]){
-      await UserDatabase.update(response[0].tokey)
-    }else{
-      setLogado(false);
-      setuser('faça login');
-      setTokey('');
-      router.push('/')
-    }
-  };
+    useEffect(() => {
+      if (tokey) {
+          getprodutos();
+      }
+  }, [tokey]);
 
-  const Contas = async() =>{
-    const response = await UserDatabase.serchByuse(0)
-    setContas(response|| [])
-  }  
+
+
+
+  const perfil = async() =>{
+    const response = await UserDatabase.serchByuse(1)   
+    if(response && response.length > 0){
+      setTokey(String(response[0]['tokey']))
+      return response}
+  }
+  
   const getprodutos = async () => {
     
     try {
@@ -151,20 +141,9 @@ export default function Index(){
       </View>
     );
   };
-  const perfil = async() =>{
-    const response = await UserDatabase.serchByuse(1)   
-    if(response && response.length > 0){
-      if(response[0]['vendedor']==1){router.push('/indexv')}
-      setuser(response[0]['name'])
-      setTokey(String(response[0]['tokey']))
-      setLogado(true)
-      return response
-    }else{
-      setuser ('faça login')
-    }
-  }
-  perfil()
+
   
+  perfil()
   return (
     <SafeAreaView style={styles.container}>
       <Modal transparent={true} visible={option} onRequestClose={()=>setOption(false)}>
@@ -181,27 +160,26 @@ export default function Index(){
             </View>
             <View>
             <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
-            <Text>Minhas compras</Text>
+            <Text>Minhas vendas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
-            <Text>Favoritos</Text>
+            <Text>Meus anuncios</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/history')}}>
-            <Text>Histórico</Text>
-            </TouchableOpacity>
+            
             </View>
           </View>
           <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
         </View>
       </Modal>
-      <Modal transparent={true} visible={login} onRequestClose={() => {setLogin(false); setOption(true)}}>
+      <Modal transparent={true} visible={login}  onRequestClose={()=>{setLogin(false);setOption(true)}}>
         <View style={styles.option}>
           <View style={styles.optionbox}>
             <View style={styles.prefilbox}>
               <View style={styles.perfil}>
-                <TouchableOpacity onPress={()=>{router.push('/myProfiles')}}>
+              <TouchableOpacity onPress={()=>{router.push('/myProfiles')}}>
+                
                   <View style={styles.iconperfil}>
                   </View>
                 </TouchableOpacity>
@@ -213,25 +191,23 @@ export default function Index(){
                 </TouchableOpacity>
               </View>
             </View>
-            <View>
+            <View>       
               <FlatList
                 data={contas}
                 keyExtractor={(item) => String(item.tokey)}
-                renderItem={({ item }) => (
-                  <Rconta data={item} onPress={() => { UserDatabase.update(String(item.tokey)); Contas(); }} />
-                )}
-                contentContainerStyle={{ gap: 16 }}
+                renderItem={({item}) => <Rconta data={item} onPress={() =>{UserDatabase.update(String(item.tokey));Contas()}}/>}
+                contentContainerStyle={{gap:16}}
               />
-              <TouchableOpacity style={styles.botonNC} onPress={() => { router.push('/register') }}>
-                <Text style={{ color: '#10d010', fontSize: 30 }}>+ Nova Conta</Text>
+              <TouchableOpacity style={styles.botonNC} onPress={() =>{router.push('/register')}}>
+                <Text style={{color:'#10d010',fontSize:30}}>
+                  + Nova Conta
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.3)' }} onPress={() => { setLogin(false); setOption(false) }} />
+          <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setLogin(false);setOption(false)}}/>
         </View>
       </Modal>
-      
-
 
       <View style={styles.topbox}>
         <View style={styles.iconbox}>
@@ -251,61 +227,7 @@ export default function Index(){
           </TouchableOpacity>
         </View>
       </View>
-
-      <ScrollView>
-      <View>
-        <Card style={styles.card}>
-          <ScrollView horizontal={true}> 
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/1.jpg')}/>
-            <Text style={styles.boxtext}>Poltrona Julia Cinza e Nogueira</Text>
-            <Text style={styles.textvalor}>R$548,67</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/2.jpg')}/>
-          <Text style={styles.boxtext}>Sofá 3 Lugares Beny Base de Madeira Linho Cotton Cru</Text>
-          <Text style={styles.textvalor}>R$1.449,84</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/3.jpg')}/>
-            <Text style={styles.boxtext}>Rack Treviso Preto 180 cm</Text>
-            <Text style={styles.textvalor}>R$428,67</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Card>
-        </View>
-      <View>
-        <Card style={styles.card}>
-          <ScrollView horizontal={true}> 
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/4.jpg')}/>
-            <Text style={styles.boxtext}>Cama Box Casal + Colchão D33 One Face - 56x138x188cm - Suede Preto</Text>
-            <Text style={styles.textvalor}>R$698,97</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/5.jpg')}/>
-          <Text style={styles.boxtext}>Guarda-Roupa Casal Attore 4 PT 3 GV Amendola e Grafito</Text>
-          <Text style={styles.textvalor}>R$1.258,67</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/6.jpg')}/>
-            <Text style={styles.boxtext}>Cômoda Austin 10Gv Branco</Text>
-            <Text style={styles.textvalor}>R$418,36</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Card>
-        </View>
-      <View>
-        </View>
-        <View style={{height:300}}>
-        <Link href="/teste">
-            <Text>
-                teste
-            </Text>
-        </Link>
-        </View>
-      </ScrollView>
-
+      <Conteudo/>
     </SafeAreaView>
   );
   
@@ -429,7 +351,134 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     gap:12,
     flexDirection:"row"
+  },
+  botonNp:{
+    borderRadius:30,
+    backgroundColor:'#eee',
+    justifyContent:'center',
+    alignItems:'center',
+    height:48,
+    width:160
   }
+});
+
+const stylesp = StyleSheet.create({
+  produtosContainer: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  noProductText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  produtoCard: {
+    width: 300,
+    height:350,
+    alignItems:'center',
+    marginVertical: 10,
+    marginHorizontal:20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  produtoName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  produtoDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  produtoQuantity: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  produtoValue: {
+    fontSize: 16,
+    color: '#0f0',
+    marginBottom: 10,
+  },
+  produtoImageContainer: {
+    width: 250,
+    height: 250,
+    marginTop: 10,
+  },
+  produtoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  closeModalButton: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#ff4c4c',
+    borderRadius: 10,
+  },
+  closeModalText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  modalProductName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalProductDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  modalProductPrice: {
+    fontSize: 18,
+    color: '#0f0',
+    marginBottom: 20,
+  },
+  modalImagesContainer: {
+    marginBottom: 20,
+  },
+  modalProductImage: {
+    width: 200,
+    height: 200,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  addToCartButton: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#0f0',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  addToCartText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  buyButton: {
+    padding: 15,
+    backgroundColor: '#0a74da',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  buyButtonText: {
+    fontSize: 18,
+    color: '#fff',
+  },
 });
 
 

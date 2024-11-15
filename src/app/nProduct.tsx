@@ -35,7 +35,6 @@ export default function NProduto() {
     if(response && response.length > 0){
       if(response[0]['vendedor']==0){router.push('/')}
       setTokey(String(response[0]['tokey']))
-      console.log(tokey)
       return response
   }}
   // Função para selecionar a imagem
@@ -94,7 +93,7 @@ export default function NProduto() {
     setError(null);
 
     try {
-      // Construir o objeto do formulário
+     
       const formData = {
         tokey,
         name,
@@ -104,7 +103,7 @@ export default function NProduto() {
         images: images.map(image => image.imagebase64), // Extrair as imagens em Base64
       };
 
-      const uploadResponse = await fetch(url+'upload', {
+      const uploadResponse = await fetch(url+'uploadproducts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +113,7 @@ export default function NProduto() {
 
       const json = await uploadResponse.json();
       if (uploadResponse.ok) {
-        Alert.alert('Success', 'Product uploaded successfully');
+        Alert.alert('ok', 'Produto cadastrado');
         // Limpar o formulário após o envio bem-sucedido
         setName('');
         setDescription('');
@@ -123,12 +122,12 @@ export default function NProduto() {
         setImages([]);
       } else {
         setError(json.error || 'Error uploading product');
-        Alert.alert('Error', json.error || 'Failed to upload product');
+        Alert.alert('Erro', json.error || 'produto nao cadastrado!\n tente novamente mais tarde');
       }
     } catch (error) {
       console.error('Error uploading product:', error);
-      setError('Upload failed');
-      Alert.alert('Error', 'Upload failed');
+      setError( 'Erro ao conectar ao servidor');
+      Alert.alert('Erro', 'Erro ao conectar ao servidor');
     } finally {
       setLoading(false);
     }
@@ -167,6 +166,8 @@ export default function NProduto() {
       </View>
 
       <View style={styles.conteudo}>
+        {!loading&&
+        <View>
         <Text style={styles.title}>Novo Produto</Text>
 
         <View style={styles.inputContainer}>
@@ -199,11 +200,18 @@ export default function NProduto() {
             onChangeText={setValor}
           />
         </View>
-
-        <Button title="adicionar imagem" onPress={pickImage} />
-        {loading && <Text>Enviando...</Text>}
+        <Button title="adicionar imagem" onPress={pickImage} disabled={loading}/>
         <Button title="Enviar Produto" onPress={upload} disabled={loading} />
         <Listimages />
+        </View>
+        }
+
+        {loading && 
+        <View style={{flex:1, alignItems:'center',justifyContent:'center'}}>
+          <Text style={{fontSize:20}}>Enviando...</Text>
+          <Text style={{fontSize:20}}>Aguarde</Text>
+        </View>
+        }
 
 
       </View>

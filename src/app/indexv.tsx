@@ -28,7 +28,7 @@ export default function Index(){
     description: string;
     quantity: number;
     value: number;
-    images: string[];  // Assumindo que as imagens são URLs ou base64 strings
+    images: string[];  
   };
   
 
@@ -131,7 +131,7 @@ export default function Index(){
           {produtos.length === 0 ? (
             <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
           ) : (
-            <ScrollView>
+            <ScrollView style={{width:330}}>
             {produtos.map((produto, index) => (
               <View key={index} style={stylesp.produtoCard}>
                 <TouchableOpacity onPress={() => handleProdutoPress(produto)} style={stylesp.produtoImageContainer}>
@@ -191,7 +191,7 @@ export default function Index(){
             <Text>Minhas vendas</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
+            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/myProducts')}}>
             <Text>Meus anuncios</Text>
             </TouchableOpacity>
 
@@ -407,6 +407,7 @@ const stylesp = StyleSheet.create({
     height:350,
     alignItems:'center',
     marginVertical: 10,
+    marginHorizontal:20,
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
