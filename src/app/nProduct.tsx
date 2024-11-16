@@ -18,8 +18,7 @@ export default function NProduto() {
   const [valor, setValor] = useState('');
   const [tokey,setTokey] = useState('')
   const [images, setImages] = useState<UseImage[]>([]);    
-  const [loading, setLoading] = useState(false);  // Estado de carregamento
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); 
   const [url, setUrl] = useState<string>('');
 
   useEffect(() => {
@@ -37,7 +36,7 @@ export default function NProduto() {
       setTokey(String(response[0]['tokey']))
       return response
   }}
-  // Função para selecionar a imagem
+  
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -64,7 +63,7 @@ export default function NProduto() {
     }
   };
 
-  // Função para converter a imagem para Base64
+  
   const convertToBase64 = async (uri: string) => {
     try {
       const response = await fetch(uri);
@@ -82,7 +81,7 @@ export default function NProduto() {
     }
   };
 
-  // Função para enviar a imagem ao servidor
+  
   const upload = async () => {
     if (!name || !description || !quantity || !valor || images.length === 0) {
       Alert.alert('Error', 'Todos os capor são obrigatorios!.');
@@ -90,7 +89,6 @@ export default function NProduto() {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
      
@@ -100,7 +98,7 @@ export default function NProduto() {
         description,
         quantity,
         valor,
-        images: images.map(image => image.imagebase64), // Extrair as imagens em Base64
+        images: images.map(image => image.imagebase64),
       };
 
       const uploadResponse = await fetch(url+'uploadproducts', {
@@ -114,26 +112,23 @@ export default function NProduto() {
       const json = await uploadResponse.json();
       if (uploadResponse.ok) {
         Alert.alert('ok', 'Produto cadastrado');
-        // Limpar o formulário após o envio bem-sucedido
         setName('');
         setDescription('');
         setQuantity('');
         setValor('');
         setImages([]);
       } else {
-        setError(json.error || 'Error uploading product');
         Alert.alert('Erro', json.error || 'produto nao cadastrado!\n tente novamente mais tarde');
       }
     } catch (error) {
       console.error('Error uploading product:', error);
-      setError( 'Erro ao conectar ao servidor');
       Alert.alert('Erro', 'Erro ao conectar ao servidor');
     } finally {
       setLoading(false);
     }
   };
 
-  // Função para renderizar as imagens
+  
   function Rimages({ imagebase64 }: UseImage) {
     return (
       <View style={{ marginVertical: 20 }}>
@@ -142,7 +137,7 @@ export default function NProduto() {
     );
   }
 
-  // Lista de imagens
+  
   const Listimages = () => {
     return (
       <FlatList

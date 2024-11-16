@@ -39,12 +39,6 @@ export default function Index(){
       };
       fetchConfigUrl();
     },[]);
-    useEffect(() => {
-      // Só chama getprodutos após o tokey ser atualizado
-      if (tokey) {
-          getprodutos();
-      }
-  }, [tokey]);
 
   const logout = async () => {
     await UserDatabase.delet(tokey);
@@ -75,100 +69,10 @@ export default function Index(){
       setuser ('faça login')
     }
   }
-  const getprodutos = async () => {
-    
-    try {
-      const formData = { tokey };
-  
-      const uploadResponse = await fetch(url + 'getproducts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      const json: Produto[] = await uploadResponse.json(); // Tipando a resposta como um array de Produto
-  
-      if (uploadResponse.ok) {
-        // Armazena os dados no estado
-        setProdutos(json); // Supondo que você tenha um estado de produtos do tipo Produto[]
-      } else {
-        console.error('Erro ao obter produtos:', json);
-        Alert.alert('Erro', 'Erro ao carregar produtos.');
-      }
-    } catch (error) {
-      console.error('Erro ao conectar ao servidor:', error);
-      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
-    }
-  };
 
   
 
 
-  const Conteudo = () => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedProduto, setSelectedProduto] = useState(null);
-  
-    const handleProdutoPress = (produto) => {
-      setSelectedProduto(produto);
-      setModalVisible(true);
-    };
-  
-    return (
-      <View style={{ flex: 1 }}>
-                <View style={{marginVertical: 30,alignItems:'center'}}>
-          <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
-            <View style={styles.botonNp}>
-              <Text style={{fontSize:20}}>
-                novo produto
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-        </View>  
-        <View style={stylesp.produtosContainer}>
-          {produtos.length === 0 ? (
-            <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
-          ) : (
-            <ScrollView style={{width:330}}>
-            {produtos.map((produto, index) => (
-              <View key={index} style={stylesp.produtoCard}>
-                <TouchableOpacity onPress={() => handleProdutoPress(produto)} style={stylesp.produtoImageContainer}>
-                  <Image source={{ uri: produto.images[0] }} style={stylesp.produtoImage} />
-                </TouchableOpacity>
-                <Text style={stylesp.produtoName}>{produto.name}</Text>
-                <Text style={stylesp.produtoValue}>Preço: R${produto.value.toFixed(2)}</Text>
-                
-              </View>
-            ))}
-          </ScrollView>
-        )}
-        </View>
-  
-        {/* Modal para visualização do produto */}
-        {selectedProduto && (
-          <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-            <View style={stylesp.modalContainer}>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={stylesp.closeModalButton}>
-                <Text style={stylesp.closeModalText}>Fechar</Text>
-              </TouchableOpacity>
-              <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
-              <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-              <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quality}</Text>
-              <Text style={stylesp.modalProductName}>Imagems:</Text>
-              <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
-                {selectedProduto.images.map((image, idx) => (
-                  <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
-                ))}
-              </ScrollView>
-            </View>
-          </Modal>
-        )}
-      </View>
-    );
-  };
 
   
   perfil()
@@ -255,7 +159,6 @@ export default function Index(){
           </TouchableOpacity>
         </View>
       </View>
-      <Conteudo/>
     </SafeAreaView>
   );
   
