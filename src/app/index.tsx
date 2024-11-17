@@ -431,6 +431,123 @@ const styles = StyleSheet.create({
     flexDirection:"row"
   }
 });
-
+const stylesp = StyleSheet.create({
+  produtosContainer: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  noProductText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  produtoCard: {
+    width: 300,
+    height:350,
+    alignItems:'center',
+    marginVertical: 10,
+    marginHorizontal:20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  produtoName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  produtoDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  produtoQuantity: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  produtoValue: {
+    fontSize: 16,
+    color: '#0f0',
+    marginBottom: 10,
+  },
+  produtoImageContainer: {
+    width: 250,
+    height: 250,
+    marginTop: 10,
+  },
+  produtoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  closeModalButton: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#ff4c4c',
+    borderRadius: 10,
+  },
+  closeModalText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  modalProductName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalProductDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  modalProductPrice: {
+    fontSize: 18,
+    color: '#0f0',
+    marginBottom: 20,
+  },
+  modalImagesContainer: {
+    marginBottom: 20,
+  },
+  modalProductImage: {
+    width: 200,
+    height: 200,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  addToCartButton: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#0f0',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  addToCartText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  buyButton: {
+    padding: 15,
+    backgroundColor: '#0a74da',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  buyButtonText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+});
 
 

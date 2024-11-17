@@ -4,6 +4,7 @@ import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Text,Image,TouchableOpacit
 import {useUserDatabase} from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 import{omit} from'lodash';
+import { TextInputMask } from 'react-native-masked-text'; 
 import { TextInput } from "react-native-paper";
 
 
@@ -22,7 +23,7 @@ export default function Index(){
   const [url, setUrl] = useState<string>('');
   const [tokey,setTokey] = useState<string>('')
   const [produtos,setProdutos] = useState<Produto[]>([]); 
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
   const [editarProduto, setditarProduto] = useState<boolean>(false);
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
 
@@ -80,136 +81,210 @@ export default function Index(){
     }
   };
   
-  const handleProdutoPress = (produto : Produto) => {
-    setSelectedProduto(produto);
-    setModalVisible(true);
+  const updateProduto = async (product: Produto) => {
+    const id          =product.id
+    const name        = product.name
+    const description = product.description
+    const quantity    = product.quantity
+    const valor       = product.value
+    const images      = product.images
+    try {
+      const formData = { tokey,id,name,description,quantity,valor,images };
+  
+      const uploadResponse = await fetch(url + 'updateproducts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json = await uploadResponse.json();
+      console.log(json)
+      router.push('myProducts')
+
+    } catch (error) {
+      console.error('Erro ao conectar ao servidor:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
   };
 
+  const deletProduto = async (product: Produto) => {
+    
+    try {
+      const id_product = product.id
+      const formData = { tokey,id_product};
+  
+      const uploadResponse = await fetch(url + 'deletproducts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json = await uploadResponse.json();
+      router.push('myProducts')
+
+    } catch (error) {
+      console.error('Erro ao conectar ao servidor:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  };
+
+  const ProdutoPress = (produto : Produto) => {
+    setSelectedProduto(produto);
+    setDetailsVisible(true);
+  };
+
+  const RemoveImage = (imageToRemove: string) => {
+    if (selectedProduto) {
+      const updatedImages = selectedProduto.images.filter((image) => image !== imageToRemove);
+      setSelectedProduto({ ...selectedProduto, images: updatedImages });
+    }
+  };
+
+  const AddImage = (imageToAdd: string) => {
+    if (selectedProduto) {
+      const updatedImages = [...selectedProduto.images, imageToAdd]
+      setSelectedProduto({ ...selectedProduto, images: updatedImages })
+    }
+  };
   
 
-
-  const Conteudo = () => {
-  
-    return (
-      <View style={{ flex: 1 }}>
-        <View style={{marginVertical: 30,alignItems:'center'}}>
-          <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
-            <View style={styles.botonNp}>
-              <Text style={{fontSize:20}}>
-                novo produto
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-        </View>  
-
-        <View style={stylesp.produtosContainer}>
-          {produtos.length === 0 ? (
-            <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
-          ) : (
-            <ScrollView style={{width:330}}>
-            {produtos.map((produto, index) => (
-              <TouchableOpacity onPress={() => {console.log(omit(produto, 'images')),handleProdutoPress(produto)}} key={index} style={stylesp.produtoCard}>
-                <View  style={stylesp.produtoImageContainer}>
-                  <Image source={{ uri: produto.images[0] }} style={stylesp.produtoImage} />
-                </View>
-                <Text style={stylesp.produtoName}>{produto.name}</Text>
-                <Text style={stylesp.produtoValue}>Preço: R${produto.value.toFixed(2)}</Text>
-                
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-        </View>
-  
-        {selectedProduto && (
-          <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-            {!editarProduto ?(<View style={{flex:1}}>
-
-            <View style={{height:55,flexDirection:'column-reverse',backgroundColor: '#10d010',}}>
-              <View style={styles.iconbox}>
-                <TouchableOpacity onPress={() => { setModalVisible(false) }}>
-                  <Image style={styles.image} source={require('../assets/4.png')} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={stylesp.modalContainer}>
-              <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
-              <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-              <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
-              <Text style={stylesp.modalProductName}>Imagems:</Text>
-              <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
-                {selectedProduto.images.map((image, idx) => (
-                  <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
-                ))}
-              </ScrollView>
-              
-              <TouchableOpacity onPress={() => setditarProduto(true)} style={{marginBottom: 10,padding: 10,backgroundColor: '#4cff4c',borderRadius: 10,}}>
-                <Text style={stylesp.closeModalText}>Editar anuncio</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={stylesp.closeModalButton}>
-                <Text style={stylesp.closeModalText}>Apagar anuncio</Text>
-              </TouchableOpacity>
-            </View>
-            </View>):
-
-
-            (<View>
-              <View style={{height:55,flexDirection:'column-reverse',backgroundColor: '#10d010',}}>
-
+  if(selectedProduto && detailsVisible){
+    return(
+        <SafeAreaView style={styles.container}>
+          {!editarProduto ? (
+            <View style={styles.container}>
+              <View style={{ height: 80, flexDirection: 'column-reverse', backgroundColor: '#10d010' }}>
                 <View style={styles.iconbox}>
-                  <TouchableOpacity onPress={() => { setditarProduto(false) }}>
+                  <TouchableOpacity onPress={() => { setDetailsVisible(false); }}>
                     <Image style={styles.image} source={require('../assets/4.png')} />
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={stylesp.modalContainer}>
-              <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
-              <TextInput style={styles.input}
-                placeholder="Nome"
-                value={selectedProduto.name}
-                onChangeText={(name)=>{setSelectedProduto({ ...selectedProduto, name: name })}}
-              />
-              <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-              <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
-              <Text style={stylesp.modalProductName}>Imagems:</Text>
-              <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
-                {selectedProduto.images.map((image, idx) => (
-                  <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
-                ))}
-              </ScrollView>
+                <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
+                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
+                <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
+                <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
+                <Text style={stylesp.modalProductName}>Imagens:</Text>
+                <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
+                  {selectedProduto.images.map((image, idx) => (
+                    <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
+                  ))}
+                </ScrollView>
+
+                <TouchableOpacity onPress={() => setditarProduto(true)} style={{ marginBottom: 10, padding: 10, backgroundColor: '#4cff4c', borderRadius: 10 }}>
+                  <Text style={stylesp.closeModalText}>Editar anúncio</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deletProduto(selectedProduto)} style={stylesp.closeModalButton}>
+                  <Text style={stylesp.closeModalText}>Apagar anúncio</Text>
+                </TouchableOpacity>
               </View>
-            </View>)}
-          </Modal>
-        )}
-      </View>
-    );
-  };
+            </View>
 
+          ) : (
 
+            <View style={styles.container}>
+              <View style={{ height: 80, flexDirection: 'column-reverse', backgroundColor: '#10d010' }}>
+                <View style={styles.iconbox}>
+                  <TouchableOpacity onPress={() => { setditarProduto(false);setDetailsVisible(false);}}>
+                    <Image style={styles.image} source={require('../assets/4.png')} />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-  return (
-    <SafeAreaView style={styles.container}>
+              <View style={stylesp.modalContainer}>
+                <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nome"
+                  value={selectedProduto.name}
+                  onChangeText={(name) => { setSelectedProduto({ ...selectedProduto, name: name }); }}
+                />
+                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
+                <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
+                <TextInputMask
+                  style={styles.input}
+                  type={'money'} 
+                  value={String(selectedProduto.value)}
+                  onChangeText={(value) => { setSelectedProduto({ ...selectedProduto, value: Number(value) }); }}
+                  options={{
+                    precision: 2, 
+                    separator: ',', 
+                    delimiter: '.', 
+                  }}
+                  keyboardType="numeric" 
+                  placeholder="000.00"
+                />
+                <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
+                <Text style={stylesp.modalProductName}>Imagens:</Text>
+                <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
+                  {selectedProduto.images.map((image, idx) => (
+                    <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
+                  ))}
+                </ScrollView>
+                <TouchableOpacity onPress={() => updateProduto(selectedProduto)} style={{ marginBottom: 10, padding: 10, backgroundColor: '#4cff4c', borderRadius: 10 }}>
+                  <Text style={stylesp.closeModalText}>Editar anúncio</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </SafeAreaView>
+      )
+  }else{
+    return (
+      <SafeAreaView style={styles.container}>
 
-      <View style={styles.topbox}>
-        <View style={styles.iconbox}>
-          <TouchableOpacity onPress={() => { router.push('/indexv'); }}>
-            <Image style={styles.image} source={require('../assets/4.png')} />
-          </TouchableOpacity>
+        <View style={styles.topbox}>
+          <View style={styles.iconbox}>
+            <TouchableOpacity onPress={() => { router.push('/indexv'); }}>
+              <Image style={styles.image} source={require('../assets/4.png')} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-      </View>
+        <View style={{ flex: 1 }}>
+          <View style={{marginVertical: 30,alignItems:'center'}}>
+            <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
+              <View style={styles.botonNp}>
+                <Text style={{fontSize:20}}>
+                  novo produto
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+          </View>  
 
-      <Conteudo/>
-
-    </SafeAreaView>
-  );
+          <View style={stylesp.produtosContainer}>
+            {produtos.length === 0 ? (
+              <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
+            ) : (
+              <ScrollView style={{width:330}}>
+              {produtos.map((produto, index) => (
+                <TouchableOpacity onPress={() => ProdutoPress(produto)} key={index} style={stylesp.produtoCard}>
+                  <View  style={stylesp.produtoImageContainer}>
+                    <Image source={{ uri: produto.images[0] }} style={stylesp.produtoImage} />
+                  </View>
+                  <Text style={stylesp.produtoName}>{produto.name}</Text>
+                  <Text style={stylesp.produtoValue}>Preço: R${produto.value.toFixed(2)}</Text>
+                  
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          </View>
+        </View>
+      </SafeAreaView>
+    )
+  }
   
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

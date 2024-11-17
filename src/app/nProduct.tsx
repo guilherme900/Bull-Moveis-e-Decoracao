@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, Alert, TextInput, Image, Button, SafeAreaView, StyleSheet, View, FlatList } from "react-native";
-import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
+import {useUserDatabase} from '@/database/useUserDatabase';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { readConfigFile } from '@/app/login';
@@ -12,22 +12,22 @@ export type UseImage = {
 export default function NProduto() {
     
   const UserDatabase = useUserDatabase()
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [valor, setValor] = useState('');
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [quantity, setQuantity] = useState('')
+  const [valor, setValor] = useState('')
   const [tokey,setTokey] = useState('')
-  const [images, setImages] = useState<UseImage[]>([]);    
-  const [loading, setLoading] = useState(false); 
-  const [url, setUrl] = useState<string>('');
+  const [images, setImages] = useState<UseImage[]>([])    
+  const [loading, setLoading] = useState(false) 
+  const [url, setUrl] = useState<string>('')
 
   useEffect(() => {
     const fetchConfigUrl = async () => {
-      const configUrl = await readConfigFile();
-      setUrl(configUrl);
-    };
-    fetchConfigUrl();
-  }, []);
+      const configUrl = await readConfigFile()
+      setUrl(configUrl)
+    }
+    fetchConfigUrl()
+  }, [])
 
   const user = async() =>{
     const response = await UserDatabase.serchByuse(1)   
@@ -38,10 +38,10 @@ export default function NProduto() {
   }}
   
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (permissionResult.granted === false) {
-      Alert.alert('Permission', 'Permission to access gallery is required!');
-      return;
+      Alert.alert('Permission', 'Permission to access gallery is required!')
+      return
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -49,46 +49,44 @@ export default function NProduto() {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
-    });
+    })
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-      const base64Uri = await convertToBase64(uri);
+      const uri = result.assets[0].uri
+      const base64Uri = await convertToBase64(uri)
 
-      // Criar um objeto do tipo UseImage
-      const newImage: UseImage = { imagebase64: base64Uri };
+      const newImage: UseImage = { imagebase64: base64Uri }
 
-      // Concatenar o novo objeto ao array de imagens
-      setImages((prevImages) => [...prevImages, newImage]);
+      setImages((prevImages) => [...prevImages, newImage])
     }
-  };
+  }
 
   
   const convertToBase64 = async (uri: string) => {
     try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      const response = await fetch(uri)
+      const blob = await response.blob()
       const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(blob);
-      });
-      return base64;
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = (error) => reject(error)
+        reader.readAsDataURL(blob)
+      })
+      return base64
     } catch (error) {
-      console.error('Error converting image to base64:', error);
-      return '';
+      console.error('Error converting image to base64:', error)
+      return ''
     }
-  };
+  }
 
   
   const upload = async () => {
     if (!name || !description || !quantity || !valor || images.length === 0) {
-      Alert.alert('Error', 'Todos os capor são obrigatorios!.');
-      return;
+      Alert.alert('Error', 'Todos os capor são obrigatorios!.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
      
@@ -99,7 +97,7 @@ export default function NProduto() {
         quantity,
         valor,
         images: images.map(image => image.imagebase64),
-      };
+      }
 
       const uploadResponse = await fetch(url+'uploadproducts', {
         method: 'POST',
@@ -107,26 +105,26 @@ export default function NProduto() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData), // Enviar o formulário completo
-      });
+      })
 
-      const json = await uploadResponse.json();
+      const json = await uploadResponse.json()
       if (uploadResponse.ok) {
-        Alert.alert('ok', 'Produto cadastrado');
-        setName('');
-        setDescription('');
-        setQuantity('');
-        setValor('');
-        setImages([]);
+        Alert.alert('ok', 'Produto cadastrado')
+        setName('')
+        setDescription('')
+        setQuantity('')
+        setValor('')
+        setImages([])
       } else {
-        Alert.alert('Erro', json.error || 'produto nao cadastrado!\n tente novamente mais tarde');
+        Alert.alert('Erro', json.error || 'produto nao cadastrado!\n tente novamente mais tarde')
       }
     } catch (error) {
-      console.error('Error uploading product:', error);
-      Alert.alert('Erro', 'Erro ao conectar ao servidor');
+      console.error('Error uploading product:', error)
+      Alert.alert('Erro', 'Erro ao conectar ao servidor')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   
   function Rimages({ imagebase64 }: UseImage) {
@@ -134,7 +132,7 @@ export default function NProduto() {
       <View style={{ marginVertical: 20 }}>
         <Image source={{ uri: imagebase64 }} style={{ width: 200, height: 200 }} />
       </View>
-    );
+    )
   }
 
   
@@ -147,14 +145,14 @@ export default function NProduto() {
         horizontal={true}
         contentContainerStyle={{ gap: 16 }}
       />
-    );
-  };
+    )
+  }
   user()
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topbox}>
         <View style={styles.iconbox}>
-          <TouchableOpacity onPress={() => { router.push('/indexv'); }}>
+          <TouchableOpacity onPress={() => { router.push('/indexv') }}>
             <Image style={styles.image} source={require('../assets/4.png')} />
           </TouchableOpacity>
         </View>
@@ -211,7 +209,7 @@ export default function NProduto() {
 
       </View>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -285,5 +283,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-});
+})
 
