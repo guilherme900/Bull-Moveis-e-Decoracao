@@ -144,19 +144,13 @@ export default function Index(){
       <View style={styles.topbox}>
         <View style={styles.iconbox}>
           <TouchableOpacity onPress={()=>{setOption(true)}}>
-            <Image style={styles.image} source={require('../assets/1.png')}
-          />
+            <Image style={styles.image} source={require('../assets/1.png')}/>
           </TouchableOpacity>
-          <TouchableOpacity onPress={()=>{router.push('/search'); }}>
+          
             <View style={styles.textbox}>
-            <Image style={styles.lupa} source={require('../assets/2.png')}
-            />
-            <Text style={{margin:10}}>Pesquisar</Text>
+            <Text style={{margin:10,fontSize:15}}>Area vendedor</Text>
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={()=>{router.push('/cart'); }}>
-            <Image style={styles.image} source={require('../assets/3.png')}/>
-          </TouchableOpacity>
+            <Image style={styles.image}/>
         </View>
       </View>
     </SafeAreaView>
@@ -194,7 +188,6 @@ const styles = StyleSheet.create({
     width:270,
     borderRadius:20,
     flexDirection:'row',
-    backgroundColor : '#ffffff',
   },
   option:{
     flex:1,
