@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   botonNp:{
     borderRadius:30,
-    backgroundColor:'#eee',
+    backgroundColor:'#0f0',
     justifyContent:'center',
     alignItems:'center',
     height:48,
@@ -560,7 +560,7 @@ const stylesp = StyleSheet.create({
   },
   produtoValue: {
     fontSize: 16,
-    color: '#0f0',
+    color: '#0c0',
     marginBottom: 10,
   },
   produtoImageContainer: {
