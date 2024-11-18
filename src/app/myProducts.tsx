@@ -1,8 +1,10 @@
 import {router} from "expo-router"
 import React, {useState,useEffect} from 'react';
-import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Text,Image,TouchableOpacity,Modal} from 'react-native';
+import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Text,Image,TouchableOpacity} from 'react-native';
 import {useUserDatabase} from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
+import * as ImagePicker from 'expo-image-picker';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import{omit} from'lodash';
 import { TextInputMask } from 'react-native-masked-text'; 
 import { TextInput } from "react-native-paper";
@@ -11,6 +13,7 @@ import { TextInput } from "react-native-paper";
 export type Produto = {
   id: number;
   name: string;
+  hashtags: string
   description: string;
   quantity: number;
   value: number;
@@ -84,12 +87,13 @@ export default function Index(){
   const updateProduto = async (product: Produto) => {
     const id          =product.id
     const name        = product.name
+    const hashtags     = product.hashtags
     const description = product.description
     const quantity    = product.quantity
     const valor       = product.value
     const images      = product.images
     try {
-      const formData = { tokey,id,name,description,quantity,valor,images };
+      const formData = { tokey,id,name,hashtags,description,quantity,valor,images };
   
       const uploadResponse = await fetch(url + 'updateproducts', {
         method: 'POST',
@@ -101,6 +105,9 @@ export default function Index(){
   
       const json = await uploadResponse.json();
       console.log(json)
+      if(uploadResponse.ok){Alert.alert('Ok',json.mensagem)
+      }else{Alert.alert('Erro',json.error)}
+      
       router.push('myProducts')
 
     } catch (error) {
@@ -124,6 +131,8 @@ export default function Index(){
       });
   
       const json = await uploadResponse.json();
+      if(uploadResponse.ok){Alert.alert('Ok',json.mensagem)
+      }else{Alert.alert('Erro',json.error)}
       router.push('myProducts')
 
     } catch (error) {
@@ -137,6 +146,51 @@ export default function Index(){
     setDetailsVisible(true);
   };
 
+  const pickImage = async () => {
+    const AddImage = (imageToAdd: string) => {
+      if (selectedProduto) {
+        const updatedImages = [...selectedProduto.images, imageToAdd]
+        setSelectedProduto({ ...selectedProduto, images: updatedImages })
+      }
+    };
+
+    const convertToBase64 = async (uri: string) => {
+      try {
+        const response = await fetch(uri)
+        const blob = await response.blob()
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.onerror = (error) => reject(error)
+          reader.readAsDataURL(blob)
+        })
+        return base64
+      } catch (error) {
+        console.error('Error converting image to base64:', error)
+        return ''
+      }
+    }
+
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission', 'Permission to access gallery is required!')
+      return
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    })
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const uri = result.assets[0].uri
+      const base64Uri = await convertToBase64(uri)
+      AddImage(base64Uri)
+      }
+    }
+
   const RemoveImage = (imageToRemove: string) => {
     if (selectedProduto) {
       const updatedImages = selectedProduto.images.filter((image) => image !== imageToRemove);
@@ -144,12 +198,6 @@ export default function Index(){
     }
   };
 
-  const AddImage = (imageToAdd: string) => {
-    if (selectedProduto) {
-      const updatedImages = [...selectedProduto.images, imageToAdd]
-      setSelectedProduto({ ...selectedProduto, images: updatedImages })
-    }
-  };
   
 
   if(selectedProduto && detailsVisible){
@@ -164,12 +212,15 @@ export default function Index(){
                   </TouchableOpacity>
                 </View>
               </View>
-
+              <ScrollView>
               <View style={stylesp.modalContainer}>
-                <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
-                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-                <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-                <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
+                <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text><Text/>
+                <Text style={stylesp.modalProductName}>hashtags:</Text>
+                <Text style={stylesp.modalProductName}>{selectedProduto.hashtags}</Text><Text/>
+                <Text style={stylesp.modalProductName}>Descrição do produto:</Text>
+                <Text style={stylesp.modalProductDescription}> {selectedProduto.description}</Text><Text/>
+                <Text style={stylesp.modalProductName}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
+                <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text><Text/>
                 <Text style={stylesp.modalProductName}>Imagens:</Text>
                 <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
                   {selectedProduto.images.map((image, idx) => (
@@ -184,6 +235,7 @@ export default function Index(){
                   <Text style={stylesp.closeModalText}>Apagar anúncio</Text>
                 </TouchableOpacity>
               </View>
+              </ScrollView>
             </View>
 
           ) : (
@@ -191,46 +243,88 @@ export default function Index(){
             <View style={styles.container}>
               <View style={{ height: 80, flexDirection: 'column-reverse', backgroundColor: '#10d010' }}>
                 <View style={styles.iconbox}>
-                  <TouchableOpacity onPress={() => { setditarProduto(false);setDetailsVisible(false);}}>
+                  <TouchableOpacity onPress={() => {
+                     setditarProduto(false);setDetailsVisible(false);}}>
                     <Image style={styles.image} source={require('../assets/4.png')} />
                   </TouchableOpacity>
                 </View>
               </View>
-
+              <ScrollView >
               <View style={stylesp.modalContainer}>
-                <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
+                <Text style={stylesp.modalProductName}>Nome do produto</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Nome"
                   value={selectedProduto.name}
-                  onChangeText={(name) => { setSelectedProduto({ ...selectedProduto, name: name }); }}
+                  onChangeText={(name) => {
+                     setSelectedProduto({ ...selectedProduto, name: name }); }}
                 />
-                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-                <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
+                <Text style={stylesp.modalProductName}>Palavras chave do produto ex:#sofa#branco</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="ex:#sofa#branco"
+                  value={selectedProduto.hashtags}
+                  onChangeText={(hashtags) => {
+                     setSelectedProduto({ ...selectedProduto, hashtags: hashtags }); }}
+                />
+                <Text style={stylesp.modalProductName}>Descrição do produto</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Descrição"
+                  value={selectedProduto.description}
+                  onChangeText={(description) => {
+                     setSelectedProduto({ ...selectedProduto, description: description }); }}
+                />
+                <Text style={stylesp.modalProductName}>Valor do produto</Text>
                 <TextInputMask
                   style={styles.input}
-                  type={'money'} 
-                  value={String(selectedProduto.value)}
-                  onChangeText={(value) => { setSelectedProduto({ ...selectedProduto, value: Number(value) }); }}
-                  options={{
-                    precision: 2, 
-                    separator: ',', 
-                    delimiter: '.', 
+                  type={'money'}
+                  value={selectedProduto.value.toFixed(2).replace('.', ',')} 
+                  onChangeText={(value) => {
+                    const numericValue = value.replace(/\D/g, '');
+                    const formattedValue = (Number(numericValue) / 100).toFixed(2);
+                    setSelectedProduto({ ...selectedProduto, value: Number(formattedValue) });
                   }}
-                  keyboardType="numeric" 
+                  options={{
+                    precision: 2,   
+                    separator: ',',  
+                    delimiter: '.',  
+                  }}
+                  keyboardType="numeric"
                   placeholder="000.00"
                 />
-                <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
+                <Text style={stylesp.modalProductName}>Quantidade</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="quantidade"
+                  value={String(selectedProduto.quantity)}
+                  onChangeText={(value) => {
+                    const numericValue = value.replace(/\D/g, '');
+                    setSelectedProduto({ ...selectedProduto, quantity: Number(numericValue) });
+                  }}
+                />
                 <Text style={stylesp.modalProductName}>Imagens:</Text>
+                <TouchableOpacity onPress={() => pickImage()} style={{ marginBottom: 10, padding: 10, backgroundColor: '#4cff4c', borderRadius: 10 }}>
+                  <Text style={stylesp.closeModalText}>Adicio imagem</Text>
+                </TouchableOpacity>
                 <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
                   {selectedProduto.images.map((image, idx) => (
-                    <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
+                    <View key={idx} style={{position: 'relative',}}>
+                      <Image source={{ uri: image }} style={stylesp.modalProductImage} />
+                      <TouchableOpacity
+                      style={stylesp.trashIconContainer}
+                      onPress={() => RemoveImage(image)}
+                    >
+                    <Icon name="trash-can" size={24} color="white" />
+                  </TouchableOpacity>
+                  </View>
                   ))}
                 </ScrollView>
                 <TouchableOpacity onPress={() => updateProduto(selectedProduto)} style={{ marginBottom: 10, padding: 10, backgroundColor: '#4cff4c', borderRadius: 10 }}>
                   <Text style={stylesp.closeModalText}>Editar anúncio</Text>
                 </TouchableOpacity>
               </View>
+              </ScrollView>
             </View>
           )}
         </SafeAreaView>
@@ -246,7 +340,7 @@ export default function Index(){
             </TouchableOpacity>
           </View>
         </View>
-
+        <ScrollView>
         <View style={{ flex: 1 }}>
           <View style={{marginVertical: 30,alignItems:'center'}}>
             <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
@@ -256,14 +350,12 @@ export default function Index(){
                 </Text>
               </View>
             </TouchableOpacity>
-            
           </View>  
-
           <View style={stylesp.produtosContainer}>
             {produtos.length === 0 ? (
               <Text style={stylesp.noProductText}>Nenhum produto encontrado.</Text>
             ) : (
-              <ScrollView style={{width:330}}>
+              <ScrollView>
               {produtos.map((produto, index) => (
                 <TouchableOpacity onPress={() => ProdutoPress(produto)} key={index} style={stylesp.produtoCard}>
                   <View  style={stylesp.produtoImageContainer}>
@@ -278,6 +370,7 @@ export default function Index(){
           )}
           </View>
         </View>
+        </ScrollView>
       </SafeAreaView>
     )
   }
@@ -415,11 +508,12 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: '#000',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
+    backgroundColor:'#fff'
   },
 });
 
@@ -482,7 +576,7 @@ const stylesp = StyleSheet.create({
   modalContainer: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#ddd',
   },
   closeModalButton: {
     marginBottom: 10,
@@ -491,7 +585,7 @@ const stylesp = StyleSheet.create({
     borderRadius: 10,
   },
   closeModalText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 18,
     textAlign: 'center',
   },
@@ -539,6 +633,14 @@ const stylesp = StyleSheet.create({
   buyButtonText: {
     fontSize: 18,
     color: '#fff',
+  },
+  trashIconContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 8,
+    backgroundColor: 'rgba(255, 0, 0, 1)',
+    padding: 5,
+    borderRadius: 20,
   },
 });
 

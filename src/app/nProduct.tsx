@@ -1,25 +1,24 @@
 import { useState, useEffect } from 'react';
-import { TouchableOpacity, Text, Alert, TextInput, Image, Button, SafeAreaView, StyleSheet, View, FlatList } from "react-native";
+import { TouchableOpacity, Text, Alert, TextInput, Image, Button, SafeAreaView,ScrollView, StyleSheet, View} from "react-native";
 import {useUserDatabase} from '@/database/useUserDatabase';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import { TextInputMask } from 'react-native-masked-text'; 
 import { readConfigFile } from '@/app/login';
+import { Produto } from '@/app/myProducts';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { includes } from 'lodash';
 
-export type UseImage = {
-  imagebase64: string;
-}
+const p1 = {id:0,name:'',hashtags:'#',description:'',quantity:0,value:0,images:[]}
 
 export default function NProduto() {
     
-  const UserDatabase = useUserDatabase()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [valor, setValor] = useState('')
-  const [tokey,setTokey] = useState('')
-  const [images, setImages] = useState<UseImage[]>([])    
-  const [loading, setLoading] = useState(false) 
+  const UserDatabase = useUserDatabase() 
+  const [tokey,setTokey] = useState<string>('')
+  const [produto,setProduto] =  useState<Produto>(p1);
+  const [loading, setLoading] = useState<boolean>(false) 
   const [url, setUrl] = useState<string>('')
+
 
   useEffect(() => {
     const fetchConfigUrl = async () => {
@@ -28,6 +27,9 @@ export default function NProduto() {
     }
     fetchConfigUrl()
   }, [])
+  useEffect(() => {
+    geraHashtag()
+  },[produto.name])
 
   const user = async() =>{
     const response = await UserDatabase.serchByuse(1)   
@@ -54,14 +56,13 @@ export default function NProduto() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri
       const base64Uri = await convertToBase64(uri)
-
-      const newImage: UseImage = { imagebase64: base64Uri }
-
-      setImages((prevImages) => [...prevImages, newImage])
+      if (produto) {
+        const updatedImages = [...produto.images, base64Uri]
+        setProduto({ ...produto, images: updatedImages })
+      }
     }
   }
 
-  
   const convertToBase64 = async (uri: string) => {
     try {
       const response = await fetch(uri)
@@ -79,42 +80,61 @@ export default function NProduto() {
     }
   }
 
-  
+  const RemoveImage = (imageToRemove: string) => {
+    if (produto) {
+      const updatedImages = produto.images.filter((image) => image !== imageToRemove);
+      setProduto({ ...produto, images: updatedImages });
+    }
+  };
+
+  const geraHashtag = async () => {
+    const liname = produto.name.split(' ')
+    var va =''
+    var hashtag :string
+    var hashtags =''
+    for (let v of liname){
+      if (va){
+        hashtag = va+'-'+v
+        va =''
+      }else{hashtag = v}
+      
+      if ( ['de','do','da'].includes(v)){ 
+        va = v
+        console.log(va)
+      }else{hashtags = hashtags+'#'+hashtag}
+    }
+    
+    
+    setProduto({ ...produto, hashtags:hashtags });
+  }
   const upload = async () => {
-    if (!name || !description || !quantity || !valor || images.length === 0) {
+    if (!produto.name || !produto.description || !produto.quantity || !produto.value || produto.images.length === 0) {
       Alert.alert('Error', 'Todos os capor são obrigatorios!.')
       return
     }
-
     setLoading(true)
-
+    const name        = produto.name
+    const hashtags     = produto.hashtags
+    const description = produto.description
+    const quantity    = produto.quantity
+    const valor       = produto.value
+    const images      = produto.images
     try {
      
       const formData = {
-        tokey,
-        name,
-        description,
-        quantity,
-        valor,
-        images: images.map(image => image.imagebase64),
-      }
-
+        tokey,name,hashtags,description,quantity,valor,images}
       const uploadResponse = await fetch(url+'uploadproducts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData), // Enviar o formulário completo
+        body: JSON.stringify(formData),
       })
 
       const json = await uploadResponse.json()
       if (uploadResponse.ok) {
         Alert.alert('ok', 'Produto cadastrado')
-        setName('')
-        setDescription('')
-        setQuantity('')
-        setValor('')
-        setImages([])
+        setProduto(p1)
       } else {
         Alert.alert('Erro', json.error || 'produto nao cadastrado!\n tente novamente mais tarde')
       }
@@ -126,27 +146,9 @@ export default function NProduto() {
     }
   }
 
-  
-  function Rimages({ imagebase64 }: UseImage) {
-    return (
-      <View style={{ marginVertical: 20 }}>
-        <Image source={{ uri: imagebase64 }} style={{ width: 200, height: 200 }} />
-      </View>
-    )
-  }
+
 
   
-  const Listimages = () => {
-    return (
-      <FlatList
-        data={images}
-        keyExtractor={(item, index) => String(index)}  // Usando o índice como chave
-        renderItem={({ item }) => <Rimages {...item} />}
-        horizontal={true}
-        contentContainerStyle={{ gap: 16 }}
-      />
-    )
-  }
   user()
   return (
     <SafeAreaView style={styles.container}>
@@ -160,43 +162,84 @@ export default function NProduto() {
 
       <View style={styles.conteudo}>
         {!loading&&
-        <View>
+        <ScrollView>
         <Text style={styles.title}>Novo Produto</Text>
 
         <View style={styles.inputContainer}>
-          <Text>Nome do Produto</Text>
+          <Text style={styles.modalProductName}>  Nome do Produto</Text>
           <TextInput
             style={styles.input}
             placeholder="Nome"
-            value={name}
-            onChangeText={setName}
+            value={produto.name}
+            onChangeText={(name) => {
+              setProduto({ ...produto, name: name })
+            }}
           />
-          <Text>Descrição do Produto</Text>
+          <Text style={styles.modalProductName}>  Palavras chave do produto ex:#sofa#branco</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="ex:#sofa#branco"
+            value={produto.hashtags}
+            onChangeText={(hashtags) => {
+              setProduto({ ...produto, hashtags:hashtags });
+            }}
+          />
+          <Text style={styles.modalProductName}>  Descrição do Produto</Text>
           <TextInput
             style={styles.input}
             placeholder="Descrição"
-            value={description}
-            onChangeText={setDescription}
+            value={produto.description}
+            onChangeText={(description) => {
+              setProduto({ ...produto, description:description });
+            }}
           />
-          <Text>Quantidade</Text>
+          <Text style={styles.modalProductName}>  Quantidade</Text>
           <TextInput
             style={styles.input}
             placeholder="Quantidade"
-            value={quantity}
-            onChangeText={setQuantity}
+            value={String(produto.quantity)}
+            onChangeText={(value) => {
+              const numericValue = value.replace(/\D/g, '');
+              setProduto({ ...produto, quantity: Number(numericValue) });
+            }}
           />
-          <Text>Valor do Produto</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Valor"
-            value={valor}
-            onChangeText={setValor}
-          />
+          <Text style={styles.modalProductName}>  Valor do Produto</Text>
+          <TextInputMask
+                  style={styles.input}
+                  type={'money'}
+                  value={produto.value.toFixed(2).replace('.', ',')} 
+                  onChangeText={(value) => {
+                    const numericValue = value.replace(/\D/g, '');
+                    const formattedValue = (Number(numericValue) / 100).toFixed(2);
+                    setProduto({ ...produto, value: Number(formattedValue) });
+                  }}
+                  options={{
+                    precision: 2,   
+                    separator: ',',  
+                    delimiter: '.',  
+                  }}
+                  keyboardType="numeric"
+                  placeholder="000.00"
+                />
         </View>
         <Button title="adicionar imagem" onPress={pickImage} disabled={loading}/>
-        <Button title="Enviar Produto" onPress={upload} disabled={loading} />
-        <Listimages />
-        </View>
+        <Button title="Enviar Produto" onPress={upload} disabled={loading} />   
+        {produto &&
+        <ScrollView horizontal={true} style={{marginBottom: 20}}>
+          {produto.images.map((image, idx) => (
+            <View key={idx} style={{position: 'relative',}}>
+              <Image key={idx} source={{ uri: image }} style={styles.ProductImage} />                      
+              <TouchableOpacity
+                style={styles.trashIconContainer}
+                onPress={() => RemoveImage(image)}
+              >
+              <Icon name="trash-can" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+        }
+        </ScrollView>
         }
 
         {loading && 
@@ -245,7 +288,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: '#000',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
@@ -282,6 +325,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  ProductImage: {
+    width: 200,
+    height: 200,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  trashIconContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 8,
+    backgroundColor: 'rgba(255, 0, 0, 1)',
+    padding: 5,
+    borderRadius: 20,
+  },
+  modalProductName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 })
 
