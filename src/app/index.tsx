@@ -4,7 +4,11 @@ import {SafeAreaView,StyleSheet,View,ScrollView,Alert,Text,Image,TouchableOpacit
 import { Card } from 'react-native-paper';
 import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
+import { Produto } from '@/app/myProducts';
 import {readConfigFile} from '@/app/login';
+import {Endereco} from '@/app/indexv';
+
+const ender ={cep:'',uf:'',cidade:'',rua:'',numero:0,}
 
 export default function Index(){
   useEffect(() => {
@@ -13,24 +17,17 @@ export default function Index(){
     return () => backHandler.remove();
   }, []);
 
-  type Produto = {
-    name: string;
-    description: string;
-    quantity: number;
-    value: number;
-    images: string[];  // Assumindo que as imagens são URLs ou base64 strings
-  };
   const UserDatabase = useUserDatabase()
-  const [tokey,setTokey] = useState('')
-  const [user,setuser]=useState('faça login');
-  const [option, setOption] = useState(false);
-  const [login ,  setLogin] = useState(false);
-  const [logado, setLogado] = useState(false);
-  const [contas, setContas] = useState<UserDatabase[]>([])
-  const [produtos,setProdutos] = useState<Produto[]>([]); 
-  const [cart  ,   setCart] = useState(false);
-  const [produto,setproduto] = useState(false);     
   const [url, setUrl] = useState<string>('');
+  const [tokey,setTokey] = useState<string>('')
+  const [user,setuser]=useState<string>('faça login');  
+  const [endereco,setEndereco] = useState<Endereco>(ender); 
+  const [option, setOption] = useState<boolean>(false);
+  const [login ,  setLogin] = useState<boolean>(false);
+  const [logado, setLogado] = useState<boolean>(false);
+  const [produto,setproduto] = useState<boolean>(false); 
+  const [produtos,setProdutos] = useState<Produto[]>([]);   
+  const [contas, setContas] = useState<UserDatabase[]>([])
   
   useEffect(() => {
       const fetchConfigUrl = async () => {
@@ -38,7 +35,13 @@ export default function Index(){
         setUrl(configUrl);
       };
       fetchConfigUrl();
-    },[]);
+  },[]);
+  useEffect(() => {
+  if(url&&tokey){getendereco()}
+  },[url,tokey]);
+  useEffect(() => {
+    if(url){getprodutos(endereco.cep)}
+  },[endereco.cep]);
 
   const logout = async () => {
     await UserDatabase.delet(tokey);
@@ -56,11 +59,46 @@ export default function Index(){
   const Contas = async() =>{
     const response = await UserDatabase.serchByuse(0)
     setContas(response|| [])
-  }  
-  const getprodutos = async () => {
-    
+  } 
+  const getendereco = async ()=>{
     try {
       const formData = { tokey };
+  
+      const uploadResponse = await fetch(url + 'getendereco', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json: Endereco = await uploadResponse.json() ;
+  
+      if (uploadResponse.ok) {
+        if (json && json.cidade !== "Nenhum endereço encontrado") {
+          setEndereco(json);
+        } else {
+          console.log('sem endereco');
+        }
+      } else {
+        console.error('Erro ao obter endereço:', json);
+        Alert.alert('Erro', 'Erro ao carregar endereço.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar endereço:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  } 
+  const getprodutos = async (cep:string) => {
+    
+    try {
+      let formData
+      if (cep){
+        formData = { cep };
+      }else{
+        formData = {tokey}
+      }
+
   
       const uploadResponse = await fetch(url + 'getproducts', {
         method: 'POST',
@@ -70,11 +108,10 @@ export default function Index(){
         body: JSON.stringify(formData),
       });
   
-      const json: Produto[] = await uploadResponse.json(); // Tipando a resposta como um array de Produto
-  
+      const json: Produto[] = await uploadResponse.json();
+      
       if (uploadResponse.ok) {
-        // Armazena os dados no estado
-        setProdutos(json); // Supondo que você tenha um estado de produtos do tipo Produto[]
+        setProdutos(json);
       } else {
         console.error('Erro ao obter produtos:', json);
         Alert.alert('Erro', 'Erro ao carregar produtos.');
@@ -84,15 +121,14 @@ export default function Index(){
       Alert.alert('Erro', 'Erro ao conectar ao servidor.');
     }
   };
+  const addcart = async()=>{
 
-  
-
-
+  }
   const Conteudo = () => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedProduto, setSelectedProduto] = useState(null);
+    const [modalVisible, setModalVisible] = useState<boolean>(false);
+    const [selectedProduto, setSelectedProduto] = useState<Produto|null>(null);
   
-    const handleProdutoPress = (produto) => {
+    const handleProdutoPress = (produto:Produto) => {
       setSelectedProduto(produto);
       setModalVisible(true);
     };
@@ -100,14 +136,7 @@ export default function Index(){
     return (
       <View style={{ flex: 1 }}>
                 <View style={{marginVertical: 30,alignItems:'center'}}>
-          <TouchableOpacity  onPress={()=>{router.push('/nProduct')}}>
-            <View style={styles.botonNp}>
-              <Text style={{fontSize:20}}>
-                novo produto
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
+
         </View>  
         <View style={stylesp.produtosContainer}>
           {produtos.length === 0 ? (
@@ -127,8 +156,6 @@ export default function Index(){
           </ScrollView>
         )}
         </View>
-  
-        {/* Modal para visualização do produto */}
         {selectedProduto && (
           <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
             <View style={stylesp.modalContainer}>
@@ -138,7 +165,7 @@ export default function Index(){
               <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
               <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
               <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quality}</Text>
+              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
               <Text style={stylesp.modalProductName}>Imagems:</Text>
               <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
                 {selectedProduto.images.map((image, idx) => (
@@ -168,33 +195,41 @@ export default function Index(){
   return (
     <SafeAreaView style={styles.container}>
       <Modal transparent={true} visible={option} onRequestClose={()=>setOption(false)}>
-        <View style={styles.option}>
-          <View style={styles.optionbox}>
-            <View style={styles.prefilbox}>
-              <TouchableOpacity style={styles.perfil} onPress={()=>{if(logado){Contas();setLogin(true);setOption(false)}else{router.push('/login')}}}>
-                <View style={styles.iconperfil}>
+        {endereco ?(
+          <View>
+            <View style={styles.option}>
+              <View style={styles.optionbox}>
+                <View style={styles.prefilbox}>
+                  <TouchableOpacity style={styles.perfil} onPress={()=>{if(logado){Contas();setLogin(true);setOption(false)}else{router.push('/login')}}}>
+                    <View style={styles.iconperfil}>
+                    </View>
+                    <View style={styles.nameperfil}>
+                      <Text>{user}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.nameperfil}>
-                  <Text>{user}</Text>
+                <View>
+                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
+                <Text>Minhas compras</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
+                <Text>Favoritos</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/history')}}>
+                <Text>Histórico</Text>
+                </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
             </View>
-            <View>
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
-            <Text>Minhas compras</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
-            <Text>Favoritos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/history')}}>
-            <Text>Histórico</Text>
-            </TouchableOpacity>
+          </View>):(<View>
+            <View style={{margin:20}}>
+              <Text style={{fontSize:18}}>cadastre um endereço para ter acesso as opnções</Text>
             </View>
           </View>
-          <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
-        </View>
+          )}
       </Modal>
       <Modal transparent={true} visible={login} onRequestClose={() => {setLogin(false); setOption(true)}}>
         <View style={styles.option}>

@@ -13,6 +13,19 @@ export default function MyProfile() {
 
     const UserDatabase = useUserDatabase();
 
+    useEffect(() => {
+      fetchConfigUrl()
+      fetchUserTokey()
+     },[]);
+    useEffect(() => {
+      if(url&&tokey){fetchUserProfile()}
+    },[url,tokey]);
+
+    const fetchConfigUrl = async () => {
+      const configUrl = await readConfigFile();
+      setUrl(configUrl);
+      };
+
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
         if (response && response.length > 0) {
@@ -21,32 +34,24 @@ export default function MyProfile() {
     };
 
     const fetchUserProfile = async () => {
-        await fetchUserTokey()          
-        try {
-            const response = await fetch(url+'login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({tokey}),
-            });
-            const data = await response.json();
-            console.log('data:',data)
-            if (response.ok) {
-                setUserInfo({ name: data.name, email: data.email })
-            } 
+      try {
+          const response = await fetch(url+'login', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({tokey}),
+          });
+          const data = await response.json();
+          if (response.ok) {
 
-        } catch (error) {
-        }
+              setUserInfo({ name: data.name, email: data.email })
+          } 
+
+      } catch (error) {
+        console.error('myProfiles.userprofiler:',error)
+      }
     };;
-    useEffect(() => {
-        const fetchConfigUrl = async () => {
-        const configUrl = await readConfigFile();
-        setUrl(configUrl);
-        };
-        fetchConfigUrl();
-        fetchUserProfile();
-    },[]);
     
     return (
         <SafeAreaView style={styles.container}>

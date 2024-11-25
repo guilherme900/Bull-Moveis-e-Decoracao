@@ -6,6 +6,22 @@ import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import {readConfigFile} from '@/app/login';
 
+export type Ordens = {
+    name: string;
+    description: string;
+    quantity: number;
+    value: number;
+    images: string[];  
+  };
+
+export type Endereco ={
+  cep:string, 
+  uf:string, 
+  cidade:string, 
+  rua:string,
+  numero:number,
+}
+
 export default function Index(){
   useEffect(() => {
     const backAction = () => {BackHandler.exitApp();return true;};
@@ -14,32 +30,36 @@ export default function Index(){
   }, []);
 
   const UserDatabase = useUserDatabase()
-  const [tokey,setTokey] = useState('')
-  const [user,setuser]=useState('faça login');
-  const [option, setOption] = useState(false);
-  const [login ,  setLogin] = useState(false);
-  const [logado, setLogado] = useState(false);
+  const [tokey,setTokey] = useState<string>('')
+  const [user,setuser]=useState<string>('faça login');
+  const [option, setOption] = useState<boolean>(false);
+  const [login ,  setLogin] = useState<boolean>(false);
+  const [logado, setLogado] = useState<boolean>(false);
   const [contas, setContas] = useState<UserDatabase[]>([])
-  const [produtos,setProdutos] = useState<Produto[]>([]); 
+  const [ordens,setOrdens] = useState<Ordens[]>([]); 
+  const [endereco,setEndereco] = useState<Endereco|null>(); 
   const [url, setUrl] = useState<string>('');
   
-  type Produto = {
-    name: string;
-    description: string;
-    quantity: number;
-    value: number;
-    images: string[];  
-  };
+
   
 
   useEffect(() => {
-      const fetchConfigUrl = async () => {
-        const configUrl = await readConfigFile();
-        setUrl(configUrl);
-      };
-      fetchConfigUrl();
-    },[]);
+    fetchConfigUrl()
+  },[]);
 
+  useEffect(() => {
+    if(url&&tokey){getendereco()}
+  },[url,tokey]);
+
+  useEffect(() => {
+    if(endereco){getordens()}
+  },[endereco]);
+  
+
+  const fetchConfigUrl = async () => {
+    const configUrl = await readConfigFile();
+    setUrl(configUrl);
+  };
   const logout = async () => {
     await UserDatabase.delet(tokey);
     const response = await UserDatabase.serchByuse(0)||[]
@@ -69,7 +89,64 @@ export default function Index(){
       setuser ('faça login')
     }
   }
-
+  const getendereco = async ()=>{
+    try {
+      const formData = { tokey };
+  
+      const uploadResponse = await fetch(url + 'getendereco', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json: Endereco = await uploadResponse.json() ;
+  
+      if (uploadResponse.ok) {
+        if (json && json.cidade !== "Nenhum endereço encontrado") {
+          setEndereco(json);
+        } else {
+          console.log('sem endereco');
+        }
+      } else {
+        console.error('Erro ao obter endereço:', json);
+        Alert.alert('Erro', 'Erro ao carregar endereço.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar endereço:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  }
+  const getordens = async()=>{
+    try {
+      const formData = { tokey };
+  
+      const uploadResponse = await fetch(url + 'getordens', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json: Ordens[] = await uploadResponse.json();
+  
+      if (uploadResponse.ok) {
+        if (json && Array.isArray(json) && json.length > 0) {
+          setOrdens(json);
+        } else {
+          console.log('Lista de ordens  vazia!');
+        }
+      } else {
+        console.error('Erro ao obter ordens:', json);
+        Alert.alert('Erro', 'Erro ao carregar ordens.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar ordens:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  }
   
 
 
@@ -90,6 +167,7 @@ export default function Index(){
                 </View>
               </TouchableOpacity>
             </View>
+            {endereco ?(
             <View>
             <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
             <Text>Minhas vendas</Text>
@@ -98,9 +176,14 @@ export default function Index(){
             <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/myProducts')}}>
             <Text>Meus anuncios</Text>
             </TouchableOpacity>
-
-            
             </View>
+            ):(
+              <View>
+                <View style={{margin:20}}>
+                  <Text style={{fontSize:18}}>cadastre um endereço para ter acesso as opnções</Text>
+                </View>
+              </View>
+              )}
           </View>
           <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
         </View>
@@ -153,6 +236,16 @@ export default function Index(){
             <Image style={styles.image}/>
         </View>
       </View>
+      {!endereco?(
+        <View style={{flex:1,alignItems:'center',justifyContent:'center'}}>
+          <Text style={{fontSize:20,padding:20}}>voce não tem endereço cadatrado!</Text>
+          <TouchableOpacity style={styles.botonNC} onPress={() => router.push('/address')}>
+            <Text style={{padding:8,fontSize:18}}>cadastrar endereço</Text>
+          </TouchableOpacity>
+        </View>
+        ):(
+      <View></View>
+      )}
     </SafeAreaView>
   );
   
@@ -284,125 +377,6 @@ const styles = StyleSheet.create({
     height:48,
     width:160
   }
-});
-
-const stylesp = StyleSheet.create({
-  produtosContainer: {
-    flex: 1,
-    padding: 10,
-    alignItems: 'center',
-  },
-  noProductText: {
-    fontSize: 18,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  produtoCard: {
-    width: 300,
-    height:350,
-    alignItems:'center',
-    marginVertical: 10,
-    marginHorizontal:20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  produtoName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  produtoDescription: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 5,
-  },
-  produtoQuantity: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 5,
-  },
-  produtoValue: {
-    fontSize: 16,
-    color: '#0f0',
-    marginBottom: 10,
-  },
-  produtoImageContainer: {
-    width: 250,
-    height: 250,
-    marginTop: 10,
-  },
-  produtoImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  closeModalButton: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: '#ff4c4c',
-    borderRadius: 10,
-  },
-  closeModalText: {
-    color: '#fff',
-    fontSize: 18,
-    textAlign: 'center',
-  },
-  modalProductName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalProductDescription: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 10,
-  },
-  modalProductPrice: {
-    fontSize: 18,
-    color: '#0f0',
-    marginBottom: 20,
-  },
-  modalImagesContainer: {
-    marginBottom: 20,
-  },
-  modalProductImage: {
-    width: 200,
-    height: 200,
-    marginRight: 10,
-    borderRadius: 10,
-  },
-  addToCartButton: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#0f0',
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  addToCartText: {
-    fontSize: 18,
-    color: '#fff',
-  },
-  buyButton: {
-    padding: 15,
-    backgroundColor: '#0a74da',
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  buyButtonText: {
-    fontSize: 18,
-    color: '#fff',
-  },
 });
 
 

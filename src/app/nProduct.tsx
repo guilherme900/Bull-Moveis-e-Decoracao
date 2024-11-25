@@ -114,7 +114,7 @@ export default function NProduto() {
     }
     setLoading(true)
     const name        = produto.name
-    const hashtags     = produto.hashtags
+    const hashtags    = produto.hashtags
     const description = produto.description
     const quantity    = produto.quantity
     const valor       = produto.value

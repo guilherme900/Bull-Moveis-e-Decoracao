@@ -72,7 +72,7 @@ export default function Index(){
         if (json && Array.isArray(json) && json.length > 0) {
           setProdutos(json);
         } else {
-          console.log('Lista de rodutos  vazia!');
+          console.log('Lista de produtos  vazia!');
         }
       } else {
         console.error('Erro ao obter produtos:', json);
