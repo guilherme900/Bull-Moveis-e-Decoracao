@@ -195,41 +195,47 @@ export default function Index(){
   return (
     <SafeAreaView style={styles.container}>
       <Modal transparent={true} visible={option} onRequestClose={()=>setOption(false)}>
-        {endereco ?(
-          <View>
-            <View style={styles.option}>
-              <View style={styles.optionbox}>
-                <View style={styles.prefilbox}>
-                  <TouchableOpacity style={styles.perfil} onPress={()=>{if(logado){Contas();setLogin(true);setOption(false)}else{router.push('/login')}}}>
-                    <View style={styles.iconperfil}>
-                    </View>
-                    <View style={styles.nameperfil}>
-                      <Text>{user}</Text>
-                    </View>
+          <View style={styles.option}>
+            <View style={styles.optionbox}>
+              <View style={styles.prefilbox}>
+                <TouchableOpacity style={styles.perfil} onPress={()=>{
+                  if(logado){Contas();setLogin(true);setOption(false)}else{router.push('/login')}}}>
+                  <View style={styles.iconperfil}>
+                  </View>
+                  <View style={styles.nameperfil}>
+                    <Text>{user}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              {endereco.cep ?(
+                <View>
+                  <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
+                    <Text>Minhas compras</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
+                    <Text>Favoritos</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/history')}}>
+                    <Text>Histórico</Text>
                   </TouchableOpacity>
                 </View>
+              ):(
                 <View>
-                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
-                <Text>Minhas compras</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/favorites')}}>
-                <Text>Favoritos</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/history')}}>
-                <Text>Histórico</Text>
-                </TouchableOpacity>
-                </View>
+                  <View style={{margin:20}}>
+                    <Text style={{fontSize:18}}>cadastre um endereço para ter acesso as opnções</Text>
+                    <TouchableOpacity style={{margin:20,padding:4,borderRadius:5,backgroundColor:'#bbb'}} onPress={()=>{router.push('/address')}}>
+                      <Text style={{fontSize:17}}>Cadastrar endereco</Text>
+                    </TouchableOpacity>
+                  </View>
               </View>
-              <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
-            </View>
-          </View>):(<View>
-            <View style={{margin:20}}>
-              <Text style={{fontSize:18}}>cadastre um endereço para ter acesso as opnções</Text>
+              )}
             </View>
           </View>
-          )}
+          <View>
+            <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
+          </View>
       </Modal>
       <Modal transparent={true} visible={login} onRequestClose={() => {setLogin(false); setOption(true)}}>
         <View style={styles.option}>
