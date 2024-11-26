@@ -71,9 +71,6 @@ export default function MyProfile() {
             <TouchableOpacity style={styles.button} onPress={() => router.push('/accountData')}>
             <Text style={styles.buttonText}>Dados da Conta</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/security')}>
-            <Text style={styles.buttonText}>Segurança</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={() => router.push('/address')}>
             <Text style={styles.buttonText}>Endereço</Text>
             </TouchableOpacity>

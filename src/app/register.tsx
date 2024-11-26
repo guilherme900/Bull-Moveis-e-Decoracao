@@ -46,13 +46,9 @@ export default function Register() {
         };
         
         const validateCpf = (cpf:string) => {
-            // Aqui você pode adicionar uma lógica mais robusta para validar CPF.
-            // Para fins de exemplo, vamos apenas verificar o tamanho.
             return cpf.length === 11; // CPF tem 11 dígitos.
         };    
         const validateCnpj = (Cnpj:string) => {
-            // Aqui você pode adicionar uma lógica mais robusta para validar CNPJ.
-            // Para fins de exemplo, vamos apenas verificar o tamanho.
             return Cnpj.length === 14; // CNPJ tem 14.
         };
         

@@ -18,6 +18,7 @@ const MyPurchases = () => {
         };
         fetchConfigUrl();
       },[]);
+    
     const handleRegister = async () => {
         try {
             const response = await fetch(url+'mcompras', {
@@ -40,7 +41,7 @@ const MyPurchases = () => {
     };
     useEffect(() => {
         const fetchCompras = async () => {
-            handleRegister()//const response =  UserDatabase.getCompras();
+            handleRegister()
              setCompras([]);
         };
 

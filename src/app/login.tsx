@@ -6,10 +6,10 @@ import LoadingScreen from '@/components/LoadingScreen';
 import * as FileSystem from 'expo-file-system';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-interface LoginResponse {
+export interface LoginResponse {
   name: string;
+  email: string;
   vendedor: string;
-  cpfCnpj: string;
   password: string;
   message?: string;
 }

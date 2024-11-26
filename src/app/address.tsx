@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, View,Button,ScrollView,TextInput, Alert, Text, Image, TouchableOpacity } from 'react-native';
-import { TextInputMask } from 'react-native-masked-text'; 
 import { useUserDatabase } from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 import {Endereco} from '@/app/indexv';
 import LoadingScreen from '@/components/LoadingScreen';
-import { router } from 'expo-router';
+import { router,useGlobalSearchParams} from 'expo-router';
 
  
 const ender ={cep:'',uf:'',cidade:'',rua:'',numero:0,}
@@ -15,6 +14,7 @@ export default function MyProfile() {
     const [endereco,setEndereco] = useState<Endereco>(ender); 
     const [loading,setLoading] = useState<boolean>(false)
     const UserDatabase = useUserDatabase();
+    const { chave } = useGlobalSearchParams()
 
     useEffect(() => {
       fetchConfigUrl()
@@ -29,10 +29,6 @@ export default function MyProfile() {
         getenderecocep(numericCep)
       }
     },[endereco.cep])
-
-    useEffect(()=>{
-      //console.log(endereco.uf)
-    },[endereco.uf])
 
     const fetchConfigUrl = async () => {
       const configUrl = await readConfigFile();
@@ -130,9 +126,16 @@ export default function MyProfile() {
   
         const json = await uploadResponse.json()
         if (uploadResponse.ok) {
-          Alert.alert('ok', 'Endereço atualizado')
           setLoading(false)
-          router.push('/indexv')
+          if(chave){
+            const ad = cidade+', '+uf+', '+rua+', '+String(numero)
+            router.push({
+            pathname: '/cart',
+            params: { chave:ad },
+        });
+          }else{
+          Alert.alert('ok', 'Endereço atualizado')
+          router.push('/indexv')}
         } else {
           Alert.alert('Erro', json.error || ' tente novamente mais tarde')
         }
@@ -217,8 +220,10 @@ export default function MyProfile() {
               setEndereco({ ...endereco, numero: Number(numericValue) });
             }}
           />
-        </View>
-        <Button title="editar endereço" onPress={upload}/>  
+        </View>{!chave?(
+        <Button title="editar endereço" onPress={upload}/>  ):(
+        <Button title="confirmação dos dados" onPress={(upload)}/>
+        )}
 
         </ScrollView>
       </View>

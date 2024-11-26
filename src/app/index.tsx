@@ -1,7 +1,6 @@
 import {Link,router} from "expo-router"
 import React, {useState,useEffect} from 'react';
 import {SafeAreaView,StyleSheet,View,ScrollView,Alert,Text,Image,TouchableOpacity,Modal,BackHandler,FlatList} from 'react-native';
-import { Card } from 'react-native-paper';
 import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import { Produto } from '@/app/myProducts';
@@ -25,7 +24,6 @@ export default function Index(){
   const [option, setOption] = useState<boolean>(false);
   const [login ,  setLogin] = useState<boolean>(false);
   const [logado, setLogado] = useState<boolean>(false);
-  const [produto,setproduto] = useState<boolean>(false); 
   const [produtos,setProdutos] = useState<Produto[]>([]);   
   const [contas, setContas] = useState<UserDatabase[]>([])
   
@@ -90,7 +88,6 @@ export default function Index(){
     }
   } 
   const getprodutos = async (cep:string) => {
-    
     try {
       let formData
       if (cep){
@@ -100,7 +97,7 @@ export default function Index(){
       }
 
   
-      const uploadResponse = await fetch(url + 'getproducts', {
+      const uploadResponse = await fetch(url + 'getproductscliente', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,9 +118,7 @@ export default function Index(){
       Alert.alert('Erro', 'Erro ao conectar ao servidor.');
     }
   };
-  const addcart = async()=>{
 
-  }
   const Conteudo = () => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [selectedProduto, setSelectedProduto] = useState<Produto|null>(null);
@@ -131,12 +126,39 @@ export default function Index(){
     const handleProdutoPress = (produto:Produto) => {
       setSelectedProduto(produto);
       setModalVisible(true);
-    };
+    };  
+    const addcart = async()=>{
+      try {
+        const id = selectedProduto?.id
+        const quantity = 0
+        const formData = { tokey,id,quantity };
+    
+        const uploadResponse = await fetch(url + 'addcart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+    
+        const json = await uploadResponse.json() ;
+    
+        if (uploadResponse.ok) {
+          Alert.alert( 'produto adicionado');
+          
+        } else {
+          console.error('Erro ao obter endereço:', json);
+          Alert.alert('Erro', 'Erro ao carregar endereço.');
+        }
+      } catch (error) {
+        console.error('Erro ao conectar endereço:', error);
+        Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+      }
+    }
   
     return (
       <View style={{ flex: 1 }}>
-                <View style={{marginVertical: 30,alignItems:'center'}}>
-
+        <View style={{marginVertical: 30,alignItems:'center'}}>
         </View>  
         <View style={stylesp.produtosContainer}>
           {produtos.length === 0 ? (
@@ -158,21 +180,32 @@ export default function Index(){
         </View>
         {selectedProduto && (
           <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-            <View style={stylesp.modalContainer}>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={stylesp.closeModalButton}>
-                <Text style={stylesp.closeModalText}>Fechar</Text>
-              </TouchableOpacity>
-              <Text style={stylesp.modalProductName}>Nome do produto: {selectedProduto.name}</Text>
-              <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-              <Text style={stylesp.modalProductPrice}>Valor do produto: R${selectedProduto.value.toFixed(2)}</Text>
-              <Text style={stylesp.modalProductName}>Estoque: {selectedProduto.quantity}</Text>
-              <Text style={stylesp.modalProductName}>Imagems:</Text>
-              <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
-                {selectedProduto.images.map((image, idx) => (
-                  <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
-                ))}
-              </ScrollView>
+            <View style={{ height: 80, flexDirection: 'column-reverse', backgroundColor: '#10d010' }}>
+              <View style={styles.iconbox}>
+                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
+                  <Image style={styles.image} source={require('../assets/4.png')} />
+                </TouchableOpacity>
+              </View>
             </View>
+            <ScrollView>
+              <View style={stylesp.modalContainer}>
+                <Text style={stylesp.modalProductName}>{selectedProduto.name}</Text>
+                <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
+                  {selectedProduto.images.map((image, idx) => (
+                    <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
+                  ))}
+                </ScrollView>
+                <Text style={stylesp.modalProductPrice}>por R${selectedProduto.value.toFixed(2)}</Text>
+                <Text style={stylesp.modalProductDescription}>Disponivel em estoque: {selectedProduto.quantity}</Text>
+                
+                <TouchableOpacity style={styles.botonNC} onPress={() => { addcart() }}>
+                  <Text style={{ color: '#10d010', fontSize: 30 }}>adicionar ao carrinho</Text>
+                </TouchableOpacity>
+                
+                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
+
+              </View>
+            </ScrollView>
           </Modal>
         )}
       </View>
@@ -206,7 +239,7 @@ export default function Index(){
                     <Text>{user}</Text>
                   </View>
                 </TouchableOpacity>
-              </View>
+              </View>{logado&&(<View>
               {endereco.cep ?(
                 <View>
                   <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
@@ -230,10 +263,8 @@ export default function Index(){
                     </TouchableOpacity>
                   </View>
               </View>
-              )}
+              )}</View>)}
             </View>
-          </View>
-          <View>
             <TouchableOpacity style={{flex:1, backgroundColor: 'rgba(0, 0, 0, 0.3)'}} onPress={()=>{setOption(false)}}/>
           </View>
       </Modal>
@@ -272,8 +303,6 @@ export default function Index(){
         </View>
       </Modal>
       
-
-
       <View style={styles.topbox}>
         <View style={styles.iconbox}>
           <TouchableOpacity onPress={()=>{setOption(true)}}>
@@ -294,50 +323,7 @@ export default function Index(){
       </View>
 
       <ScrollView>
-      <View>
-        <Card style={styles.card}>
-          <ScrollView horizontal={true}> 
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/1.jpg')}/>
-            <Text style={styles.boxtext}>Poltrona Julia Cinza e Nogueira</Text>
-            <Text style={styles.textvalor}>R$548,67</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/2.jpg')}/>
-          <Text style={styles.boxtext}>Sofá 3 Lugares Beny Base de Madeira Linho Cotton Cru</Text>
-          <Text style={styles.textvalor}>R$1.449,84</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/3.jpg')}/>
-            <Text style={styles.boxtext}>Rack Treviso Preto 180 cm</Text>
-            <Text style={styles.textvalor}>R$428,67</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Card>
-        </View>
-      <View>
-        <Card style={styles.card}>
-          <ScrollView horizontal={true}> 
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/4.jpg')}/>
-            <Text style={styles.boxtext}>Cama Box Casal + Colchão D33 One Face - 56x138x188cm - Suede Preto</Text>
-            <Text style={styles.textvalor}>R$698,97</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/5.jpg')}/>
-          <Text style={styles.boxtext}>Guarda-Roupa Casal Attore 4 PT 3 GV Amendola e Grafito</Text>
-          <Text style={styles.textvalor}>R$1.258,67</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.box} onPress={()=>{setproduto(true)}}>
-            <Image style={styles.boximage} source={require('../assets/produtos/6.jpg')}/>
-            <Text style={styles.boxtext}>Cômoda Austin 10Gv Branco</Text>
-            <Text style={styles.textvalor}>R$418,36</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Card>
-        </View>
-      <View>
-        </View>
+      <Conteudo/>
         <View style={{height:300}}>
         <Link href="/teste">
             <Text>
@@ -556,7 +542,7 @@ const stylesp = StyleSheet.create({
   },
   modalProductPrice: {
     fontSize: 18,
-    color: '#0f0',
+    color: '#0c0',
     marginBottom: 20,
   },
   modalImagesContainer: {
