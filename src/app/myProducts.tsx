@@ -13,7 +13,7 @@ import { TextInput } from "react-native-paper";
 export type Produto = {
   id: number;
   name: string;
-  hashtags: string
+  hashtags: string;
   description: string;
   quantity: number;
   value: number;
