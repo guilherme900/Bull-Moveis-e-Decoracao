@@ -47,13 +47,31 @@ const SearchScreen = () => {
 
         return () => clearTimeout(timeout);
     }, []);
-    
+
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
         if (response && response.length > 0) {
           setTokey(response[0].tokey) 
         }
     };
+
+    const geraHashtag = async () => {
+        const liname = searchQuery.split(' ')
+        var va =''
+        var hashtag :string
+        var hashtags =''
+        for (let v of liname){
+          if (va){
+            hashtag = va+'-'+v
+            va =''
+          }else{hashtag = v}
+          
+          if ( ['de','do','da'].includes(v)){ 
+            va = v
+          }else{hashtags = hashtags+'#'+hashtag}
+        }
+        return hashtags
+    }
     const getendereco = async ()=>{
         try {
           const formData = { tokey };
@@ -82,17 +100,17 @@ const SearchScreen = () => {
         }
       }
     const fetchResults = async () => {
+        const hashtags = await geraHashtag()
         try {
-            let formData 
+            let cep 
             if(endereco.cep){
-                const cep = endereco.cep
-                formData = { cep,searchQuery}
+                cep = endereco.cep
             }else{
-                const cep = '14460000'
-                formData = { cep,searchQuery}
+                cep = '14460000'
             }
+            const formData = {cep,hashtags}
       
-          const uploadResponse = await fetch(url + 'getproductscliente', {
+          const uploadResponse = await fetch(url + 'pesquisa', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -103,8 +121,11 @@ const SearchScreen = () => {
           const json: Produto[] = await uploadResponse.json();
           
           if (uploadResponse.ok) {
-            
-            setResults(json);
+            if (json && Array.isArray(json) && json.length > 0) {
+                console.log(json)
+              } else {
+                console.log('err:',json);
+              }
           } else {
             console.error('Erro ao obter produtos:', json);
             Alert.alert('Erro', 'Erro ao carregar produtos.');

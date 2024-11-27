@@ -36,7 +36,7 @@ const Cart = () => {
   useEffect(() => {
     if (url && tokey) {
       fetchCartItems();
-      console.log(chave)
+      console.log('chave cart:',chave)
       if (chave){
         setModalVisible(true)
       }
