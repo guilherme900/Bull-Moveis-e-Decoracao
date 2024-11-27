@@ -120,47 +120,14 @@ export default function Index(){
   };
 
   const Conteudo = () => {
-    const [modalVisible, setModalVisible] = useState<boolean>(false);
-    const [selectedProduto, setSelectedProduto] = useState<Produto|null>(null);
-  
     const handleProdutoPress = (produto:Produto) => {
       const id = produto.id
       router.push({
           pathname: '/produto',
           params: { chave:id},
       });
-      //setSelectedProduto(produto);
-      //setModalVisible(true);
     };  
     
-    const addcart = async()=>{
-      try {
-        const id = selectedProduto?.id
-        const quantity = 0
-        const formData = { tokey,id,quantity };
-    
-        const uploadResponse = await fetch(url + 'addcart', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-    
-        const json = await uploadResponse.json() ;
-    
-        if (uploadResponse.ok) {
-          Alert.alert( 'produto adicionado');
-          
-        } else {
-          console.error('Erro ao obter endereço:', json);
-          Alert.alert('Erro', 'Erro ao carregar endereço.');
-        }
-      } catch (error) {
-        console.error('Erro ao conectar endereço:', error);
-        Alert.alert('Erro', 'Erro ao conectar ao servidor.');
-      }
-    }
   
     return (
       <View style={{ flex: 1 }}>
@@ -184,36 +151,6 @@ export default function Index(){
           </ScrollView>
         )}
         </View>
-        {selectedProduto && (
-          <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-            <View style={{ height: 80, flexDirection: 'column-reverse', backgroundColor: '#10d010' }}>
-              <View style={styles.iconbox}>
-                <TouchableOpacity onPress={() => { setModalVisible(false); }}>
-                  <Image style={styles.image} source={require('../assets/4.png')} />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <ScrollView>
-              <View style={stylesp.modalContainer}>
-                <Text style={stylesp.modalProductName}>{selectedProduto.name}</Text>
-                <ScrollView horizontal={true} style={stylesp.modalImagesContainer}>
-                  {selectedProduto.images.map((image, idx) => (
-                    <Image key={idx} source={{ uri: image }} style={stylesp.modalProductImage} />
-                  ))}
-                </ScrollView>
-                <Text style={stylesp.modalProductPrice}>por R${selectedProduto.value.toFixed(2)}</Text>
-                <Text style={stylesp.modalProductDescription}>Disponivel em estoque: {selectedProduto.quantity}</Text>
-                
-                <TouchableOpacity style={styles.botonNC} onPress={() => { addcart() }}>
-                  <Text style={{ color: '#10d010', fontSize: 30 }}>adicionar ao carrinho</Text>
-                </TouchableOpacity>
-                
-                <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
-
-              </View>
-            </ScrollView>
-          </Modal>
-        )}
       </View>
     );
   };

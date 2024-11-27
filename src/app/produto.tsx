@@ -1,7 +1,7 @@
 import {useGlobalSearchParams,router} from "expo-router"
 import React, {useState,useEffect} from 'react';
-import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Pressable ,PressableProps,Text,Image,TouchableOpacity,Modal,BackHandler,FlatList} from 'react-native';
-import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
+import {SafeAreaView,StyleSheet,View,Alert,ScrollView,Text,Image,TouchableOpacity} from 'react-native';
+import {useUserDatabase} from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
 import { Produto } from '@/app/myProducts';
 
@@ -21,10 +21,11 @@ export default function produto (){
         fetchProduct();
     }
     }, [url, tokey,chave]);
+
     const fetchConfigUrl = async () => {
         const configUrl = await readConfigFile();
         setUrl(configUrl);
-        };
+    };
   
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
