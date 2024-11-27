@@ -104,6 +104,7 @@ export default function Index(){
                     <Text style={{fontSize:18}}> {ordem.uf_end},{ordem.cidade},{ordem.rua},{ordem.numero}</Text>
                   </View>
                 ))}
+                <View style={{height:300}}></View>
               </ScrollView>
             )}
             </View>

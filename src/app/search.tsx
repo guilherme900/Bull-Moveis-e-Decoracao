@@ -2,12 +2,15 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, View, Image,Alert, TextInput, Keyboard, FlatList, TouchableOpacity, Text } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase';
+import {Endereco} from '@/app/indexv';
 import {readConfigFile} from '@/app/login';
 import { Produto } from '@/app/myProducts';
 
+const ender ={cep:'',uf:'',cidade:'',rua:'',numero:0,}
 const SearchScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<Produto[]>([]);
+    const [endereco,setEndereco] = useState<Endereco>(ender); 
     const inputRef = useRef<TextInput>(null);
     const [tokey, setTokey] = useState<string>('');
     const router = useRouter();
@@ -22,6 +25,11 @@ const SearchScreen = () => {
         fetchConfigUrl();
         fetchUserTokey()
       },[]);
+
+    useEffect(() => {
+    if(url&&tokey){getendereco()}
+    },[url,tokey]);
+
     useEffect(() => {
         if(url&&tokey){fetchResults()}
     }, [searchQuery]);
@@ -39,17 +47,50 @@ const SearchScreen = () => {
 
         return () => clearTimeout(timeout);
     }, []);
+    
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
         if (response && response.length > 0) {
           setTokey(response[0].tokey) 
         }
     };
+    const getendereco = async ()=>{
+        try {
+          const formData = { tokey };
+      
+          const uploadResponse = await fetch(url + 'getendereco', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+      
+          const json: Endereco = await uploadResponse.json() ;
+      
+          if (uploadResponse.ok) {
+            if (json && json.cidade !== "Nenhum endereço encontrado") {
+              setEndereco(json);
+            } else {
+              console.log('sem endereco');
+            }
+          } else {
+            console.error('Erro ao obter endereço:', json);
+          }
+        } catch (error) {
+          console.error('Erro ao conectar endereço:', error);
+        }
+      }
     const fetchResults = async () => {
         try {
-            const cep = '14460000'
-            const formData = { cep,searchQuery}
-    
+            let formData 
+            if(endereco.cep){
+                const cep = endereco.cep
+                formData = { cep,searchQuery}
+            }else{
+                const cep = '14460000'
+                formData = { cep,searchQuery}
+            }
       
           const uploadResponse = await fetch(url + 'getproductscliente', {
             method: 'POST',
