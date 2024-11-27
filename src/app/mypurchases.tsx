@@ -41,7 +41,7 @@ const MyPurchases = () => {
     };
     useEffect(() => {
         const fetchCompras = async () => {
-            handleRegister()
+            //handleRegister()
              setCompras([]);
         };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter,useGlobalSearchParams } from 'expo-router';
 import { SafeAreaView, StyleSheet, FlatList, Alert,Modal, Text, TouchableOpacity, View, Image, Button, TextInput } from 'react-native';
 import { useUserDatabase } from '@/database/useUserDatabase';
+import { Produto } from '@/app/myProducts';
 import { readConfigFile } from '@/app/login';
 import { update } from 'lodash';
 
@@ -19,7 +20,8 @@ const Cart = () => {
   const [tokey, setTokey] = useState<string>('');
   const [totalValue, setTotalValue] = useState<number>(0); 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const UserDatabase = useUserDatabase();
+  const [produtos,setProdutos] = useState<Produto[]>([]); 
+  const UserDatabase = useUserDatabase()
   const router = useRouter();
   const { chave } = useGlobalSearchParams()
   
@@ -166,6 +168,39 @@ const Cart = () => {
     
   }
 
+  
+  const getprodutos = async (cep:string) => {
+    try {
+      let formData
+      if (cep){
+        formData = { cep };
+      }else{
+        formData = {tokey}
+      }
+
+  
+      const uploadResponse = await fetch(url + 'getproductscliente', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json: Produto[] = await uploadResponse.json();
+      
+      if (uploadResponse.ok) {
+        setProdutos(json);
+      } else {
+        console.error('Erro ao obter produtos:', json);
+        Alert.alert('Erro', 'Erro ao carregar produtos.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar ao servidor:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  };
+  
   const fim =()=>{
 router.push({
     pathname: '/card',
@@ -174,9 +209,37 @@ router.push({
     setModalVisible(true)
   }
 
-  const ordem =()=>{
+  const ordem = async ()=>{
     
-  }
+    try {
+        const formData = { tokey };
+  
+        const uploadResponse = await fetch(url + 'ordem', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+  
+        const json: Item[] = await uploadResponse.json();
+  
+        if (uploadResponse.ok) {
+          console.log('finalizado');
+          router.push('/')
+        
+        } else {
+          console.error('Erro ao finalizar:', json);
+        }
+      } catch (error) {
+        console.error('Erro ao conectar cart:', error);
+        Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+      }
+
+  
+    }
+
+  
   const renderCartItem = ({ item }: { item: Item }) => (
     <View style={styles.itemContainer}>
       <Text style={styles.itemName}>{item.name}</Text>
@@ -268,7 +331,7 @@ router.push({
             <View style={{padding:4}}>
             <Button title="Confirmar" onPress={() => {
               setModalVisible(false);
-              // Proceed with checkout process here...
+              ordem()
             }}  /></View>
             <View style={{padding:4}}>
             <Button title="Cancelar" onPress={() => setModalVisible(false)} />

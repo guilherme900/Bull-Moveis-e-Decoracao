@@ -1,13 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { SafeAreaView, StyleSheet, View, Image, TextInput, Keyboard, FlatList, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Image,Alert, TextInput, Keyboard, FlatList, TouchableOpacity, Text } from 'react-native';
 import { useUserDatabase, UserDatabase } from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
+import { Produto } from '@/app/myProducts';
 
 const SearchScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [results, setResults] = useState<UserDatabase[]>([]);
+    const [results, setResults] = useState<Produto[]>([]);
     const inputRef = useRef<TextInput>(null);
+    const [tokey, setTokey] = useState<string>('');
     const router = useRouter();
     const UserDatabase = useUserDatabase();
     const [url, setUrl] = useState<string>('');
@@ -18,16 +20,10 @@ const SearchScreen = () => {
           setUrl(configUrl);
         };
         fetchConfigUrl();
+        fetchUserTokey()
       },[]);
-  
-
     useEffect(() => {
-        const fetchResults = async () => {
-            setResults([]);
-            // Aqui você pode adicionar a lógica para buscar resultados com base em `searchQuery`
-        };
-
-        fetchResults();
+        if(url&&tokey){fetchResults()}
     }, [searchQuery]);
 
     useEffect(() => {
@@ -35,7 +31,6 @@ const SearchScreen = () => {
             if (inputRef.current) {
                 inputRef.current.focus();
                 Keyboard.addListener('keyboardDidShow', () => {
-                    // O teclado foi mostrado
                 });
             }
         };
@@ -44,8 +39,41 @@ const SearchScreen = () => {
 
         return () => clearTimeout(timeout);
     }, []);
-
-    const handleSelectResult = (item: UserDatabase) => {
+    const fetchUserTokey = async () => {
+        const response = await UserDatabase.serchByuse(1);
+        if (response && response.length > 0) {
+          setTokey(response[0].tokey) 
+        }
+    };
+    const fetchResults = async () => {
+        try {
+            const cep = '14460000'
+            const formData = { cep,searchQuery}
+    
+      
+          const uploadResponse = await fetch(url + 'getproductscliente', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+      
+          const json: Produto[] = await uploadResponse.json();
+          
+          if (uploadResponse.ok) {
+            
+            setResults(json);
+          } else {
+            console.error('Erro ao obter produtos:', json);
+            Alert.alert('Erro', 'Erro ao carregar produtos.');
+          }
+        } catch (error) {
+          console.error('Erro ao conectar ao servidor:', error);
+          Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+        }
+      };
+    const handleSelectResult = (item: Produto) => {
         console.log('Selected item:', item);
     };
 
@@ -72,7 +100,7 @@ const SearchScreen = () => {
 
             <FlatList
                 data={results}
-                keyExtractor={(item) => String(item.use)}
+                keyExtractor={(item) => String(item.id)}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.resultItem} onPress={() => handleSelectResult(item)}>
                         <Text>{item.name}</Text>

@@ -53,7 +53,6 @@ export default function Home(){
     async function update(){
         try {
             await productDatabase.update(String(id))
-            return Alert.alert("alterado")
         } catch (error) {
             console.log(error)
             

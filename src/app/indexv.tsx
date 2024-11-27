@@ -6,12 +6,17 @@ import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import {readConfigFile} from '@/app/login';
 
+export type Response={
+  id:number,
+  name: string;
+  ordens: Ordens[];
+}
+
 export type Ordens = {
     name: string;
     description: string;
     quantity: number;
     value: number;
-    images: string[];  
   };
 
 export type Endereco ={
@@ -130,11 +135,11 @@ export default function Index(){
         body: JSON.stringify(formData),
       });
   
-      const json: Ordens[] = await uploadResponse.json();
+      const json: Response[] = await uploadResponse.json();
   
       if (uploadResponse.ok) {
         if (json && Array.isArray(json) && json.length > 0) {
-          setOrdens(json);
+          console.log(json)
         } else {
           console.log('Lista de ordens  vazia!');
         }
@@ -148,7 +153,6 @@ export default function Index(){
     }
   }
   
-
 
 
   
@@ -378,6 +382,4 @@ const styles = StyleSheet.create({
     width:160
   }
 });
-
-
 

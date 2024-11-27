@@ -124,8 +124,13 @@ export default function Index(){
     const [selectedProduto, setSelectedProduto] = useState<Produto|null>(null);
   
     const handleProdutoPress = (produto:Produto) => {
-      setSelectedProduto(produto);
-      setModalVisible(true);
+      const id = produto.id
+      router.push({
+          pathname: '/produto',
+          params: { chave:id },
+      });
+      //setSelectedProduto(produto);
+      //setModalVisible(true);
     };  
     const addcart = async()=>{
       try {
@@ -326,9 +331,7 @@ export default function Index(){
       <Conteudo/>
         <View style={{height:300}}>
         <Link href="/teste">
-            <Text>
-                teste
-            </Text>
+        <Text>t</Text>
         </Link>
         </View>
       </ScrollView>
