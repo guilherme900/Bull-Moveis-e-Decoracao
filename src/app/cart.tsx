@@ -63,7 +63,7 @@ const Cart = () => {
 
       if (uploadResponse.ok) {
         if (json) {
-          setCartItems(json); // Atualiza o estado com os itens do carrinho
+          setCartItems(json);
         } else {
           console.log('sem itens');
         }
@@ -89,19 +89,61 @@ const Cart = () => {
           ));
     }
   };
+  const getquantity = async(id:number) =>{
+    let estoque = 20
+    try {
+      const formData = { id };
 
-  const handleBlur = (id: number, quantity: string) => {
-    const updatedQuantity = parseInt(quantity);
-    if (!isNaN(updatedQuantity) && updatedQuantity > 0) {
-      setCartItems(cartItems.map(item => 
-        item.id === id ? { ...item, quantity: updatedQuantity } : item
-      ));
-      updatecart(id,updatedQuantity)
-    } else {
+      const uploadResponse = await fetch(url + 'getquantity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const json = await uploadResponse.json();
+
+      if (uploadResponse.ok) {
+        if (json) {
+          estoque= json.estoque[0][0]
+        } else {
+          console.log('sem itens');
+        }
+      } else {
+        console.error('Erro ao obter itens:', json);
+        Alert.alert('Erro', 'Erro ao carregar itens.');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar cart:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+    return estoque
+  }
+
+  const handleBlur = async (item:Item, quantity: string) => {
+    const id = item.id
+    const updatedQuantity =  parseInt(quantity);
+    const estoque = await getquantity(item.produto)
+    if (!isNaN(updatedQuantity) && updatedQuantity < estoque) {
+      if (!isNaN(updatedQuantity) && updatedQuantity > 0) {
         setCartItems(cartItems.map(item => 
-            item.id === id ? { ...item, quantity: 1 } : item
+          item.id === id ? { ...item, quantity: updatedQuantity } : item
         ));
-        updatecart(id,1)
+        updatecart(id,updatedQuantity)
+      } else {
+          setCartItems(cartItems.map(item => 
+              item.id === id ? { ...item, quantity: 1 } : item
+          ));
+          updatecart(id,1)
+      }
+    }else{
+          Alert.alert('estoque disponivel:',String(estoque))
+          setCartItems(cartItems.map(item => 
+              item.id === id ? { ...item, quantity: estoque } : item
+          ));
+          console.log(estoque)
+          updatecart(id,estoque)
     }
     
   };
@@ -130,7 +172,7 @@ const Cart = () => {
           console.log('atualizado');
         
         } else {
-          console.error('Erro ao deletar:', json);
+          console.error('Erro no updte:', json);
         }
       } catch (error) {
         console.error('Erro ao conectar cart:', error);
@@ -168,39 +210,6 @@ const Cart = () => {
     
   }
 
-  
-  const getprodutos = async (cep:string) => {
-    try {
-      let formData
-      if (cep){
-        formData = { cep };
-      }else{
-        formData = {tokey}
-      }
-
-  
-      const uploadResponse = await fetch(url + 'getproductscliente', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      const json: Produto[] = await uploadResponse.json();
-      
-      if (uploadResponse.ok) {
-        setProdutos(json);
-      } else {
-        console.error('Erro ao obter produtos:', json);
-        Alert.alert('Erro', 'Erro ao carregar produtos.');
-      }
-    } catch (error) {
-      console.error('Erro ao conectar ao servidor:', error);
-      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
-    }
-  };
-  
   const fim =()=>{
 router.push({
     pathname: '/card',
@@ -252,7 +261,7 @@ router.push({
         keyboardType="numeric"
         value={String(item.quantity)}
         onChangeText={(newQuantity) => handleQuantityChange(item.id, newQuantity)}
-        onBlur={() => handleBlur(item.id, String(item.quantity))}
+        onBlur={() => handleBlur(item, String(item.quantity))}
       />
 
       <TouchableOpacity

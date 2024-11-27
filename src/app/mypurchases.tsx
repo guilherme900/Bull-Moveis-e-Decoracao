@@ -1,17 +1,18 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { SafeAreaView, StyleSheet,ScrollView, View, Image,Alert, TextInput, Keyboard, FlatList, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView, StyleSheet,ScrollView, View, Image,Alert, TextInput, TouchableOpacity, Text } from 'react-native';
 import { useUserDatabase } from '@/database/useUserDatabase';
-import {Endereco} from '@/app/indexv';
 import {readConfigFile} from '@/app/login';
 import { Produto } from '@/app/myProducts';
-
-const ender ={cep:'',uf:'',cidade:'',rua:'',numero:0,}
+export type Response={
+    valor:number;
+    data:string;
+    id_produto:number;
+    nome_produto:string;
+    image:string;
+}
 const SearchScreen = () => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [results, setResults] = useState<Produto[]>([]);
-    const [endereco,setEndereco] = useState<Endereco>(ender); 
-    const inputRef = useRef<TextInput>(null);
+    const [results, setResults] = useState<Response[]>([]);
     const [tokey, setTokey] = useState<string>('');
     const router = useRouter();
     const UserDatabase = useUserDatabase();
@@ -27,26 +28,8 @@ const SearchScreen = () => {
       },[]);
 
     useEffect(() => {
-    if(url&&tokey){getendereco()}
+    if(url&&tokey){fetchcompras()}
     },[url,tokey]);
-
-    useEffect(() => {
-        if(url&&tokey){fetchResults()}
-    }, [searchQuery]);
-
-    useEffect(() => {
-        const abrirTeclado = () => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-                Keyboard.addListener('keyboardDidShow', () => {
-                });
-            }
-        };
-
-        const timeout = setTimeout(abrirTeclado, 100);
-
-        return () => clearTimeout(timeout);
-    }, []);
 
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
@@ -55,28 +38,11 @@ const SearchScreen = () => {
         }
     };
 
-    const geraHashtag = async () => {
-        const liname = searchQuery.split(' ')
-        var va =''
-        var hashtag :string
-        var hashtags =''
-        for (let v of liname){
-          if (va){
-            hashtag = va+'-'+v
-            va =''
-          }else{hashtag = v}
-          
-          if ( ['de','do','da'].includes(v)){ 
-            va = v
-          }else{hashtags = hashtags+'#'+hashtag}
-        }
-        return hashtags
-    }
-    const getendereco = async ()=>{
+    const fetchcompras = async () => {
         try {
-          const formData = { tokey };
+            const formData = {tokey}
       
-          const uploadResponse = await fetch(url + 'getendereco', {
+          const uploadResponse = await fetch(url + 'mcompras', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -84,41 +50,7 @@ const SearchScreen = () => {
             body: JSON.stringify(formData),
           });
       
-          const json: Endereco = await uploadResponse.json() ;
-      
-          if (uploadResponse.ok) {
-            if (json && json.cidade !== "Nenhum endereço encontrado") {
-              setEndereco(json);
-            } else {
-              console.log('sem endereco');
-            }
-          } else {
-            console.error('Erro ao obter endereço:', json);
-          }
-        } catch (error) {
-          console.error('Erro ao conectar endereço:', error);
-        }
-    }
-    const fetchResults = async () => {
-        const hashtags = await geraHashtag()
-        try {
-            let cep 
-            if(endereco.cep){
-                cep = endereco.cep
-            }else{
-                cep = '14460000'
-            }
-            const formData = {cep,hashtags}
-      
-          const uploadResponse = await fetch(url + 'pesquisa', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-          });
-      
-          const json: Produto[] = await uploadResponse.json();
+          const json: Response[] = await uploadResponse.json();
           
           if (uploadResponse.ok) {
             if (json && Array.isArray(json) && json.length > 0) {
@@ -137,8 +69,8 @@ const SearchScreen = () => {
     };
 
     const Conteudo = () => {
-      const handleProdutoPress = (produto:Produto) => {
-        const id = produto.id
+      const handleProdutoPress = (produto:Response) => {
+        const id = produto.id_produto
         router.push({
             pathname: '/produto',
             params: { chave:id},
@@ -158,10 +90,10 @@ const SearchScreen = () => {
               {results.map((produto, index) => (
                 <View key={index} style={stylesp.produtoCard}>
                   <TouchableOpacity onPress={() => handleProdutoPress(produto)} style={stylesp.produtoImageContainer}>
-                    <Image source={{ uri: produto.images[0] }} style={stylesp.produtoImage} />
+                    <Image source={{ uri: produto.image }} style={stylesp.produtoImage} />
                   </TouchableOpacity>
-                  <Text style={stylesp.produtoName}>{produto.name}</Text>
-                  <Text style={stylesp.produtoValue}>Preço: R${produto.value.toFixed(2)}</Text>
+                  <Text style={stylesp.produtoName}>{produto.nome_produto}</Text>
+                  <Text style={stylesp.produtoValue}>Preço: R${produto.valor.toFixed(2)}</Text>
                   
                 </View>
               ))}
