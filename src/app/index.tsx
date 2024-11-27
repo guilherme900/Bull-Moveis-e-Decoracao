@@ -132,6 +132,7 @@ export default function Index(){
       //setSelectedProduto(produto);
       //setModalVisible(true);
     };  
+    
     const addcart = async()=>{
       try {
         const id = selectedProduto?.id

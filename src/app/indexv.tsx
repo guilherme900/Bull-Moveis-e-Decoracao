@@ -6,17 +6,20 @@ import {useUserDatabase,UserDatabase} from '@/database/useUserDatabase';
 import {Rconta} from '@/components/rcontas';
 import {readConfigFile} from '@/app/login';
 
-export type Response={
-  id:number,
-  name: string;
-  ordens: Ordens[];
-}
 
 export type Ordens = {
-    name: string;
-    description: string;
-    quantity: number;
-    value: number;
+  id:number;
+  id_pro:number,
+  name_pro: string;
+  valor_pro:number;
+  id_cli:number;
+  name_cli:string;
+  email_cli:string;
+  cep_end:string;
+  uf_end:string;
+  cidade:string;
+  rua:string;
+  numero:string;
   };
 
 export type Endereco ={
@@ -82,6 +85,7 @@ export default function Index(){
     const response = await UserDatabase.serchByuse(0)
     setContas(response|| [])
   }
+
   const perfil = async() =>{
     const response = await UserDatabase.serchByuse(1)   
     if(response && response.length > 0){
@@ -94,6 +98,7 @@ export default function Index(){
       setuser ('faça login')
     }
   }
+
   const getendereco = async ()=>{
     try {
       const formData = { tokey };
@@ -123,6 +128,17 @@ export default function Index(){
       Alert.alert('Erro', 'Erro ao conectar ao servidor.');
     }
   }
+
+  const handleProdutoPress = (produto:Ordens) => {
+    const id = produto.id_pro
+    router.push({
+        pathname: '/produto',
+        params: { chave:id,vend:'s'},
+    });
+    //setSelectedProduto(produto);
+    //setModalVisible(true);
+  };  
+
   const getordens = async()=>{
     try {
       const formData = { tokey };
@@ -135,11 +151,11 @@ export default function Index(){
         body: JSON.stringify(formData),
       });
   
-      const json: Response[] = await uploadResponse.json();
+      const json: Ordens[] = await uploadResponse.json();
   
       if (uploadResponse.ok) {
         if (json && Array.isArray(json) && json.length > 0) {
-          console.log(json)
+          setOrdens(json)
         } else {
           console.log('Lista de ordens  vazia!');
         }
@@ -152,7 +168,34 @@ export default function Index(){
       Alert.alert('Erro', 'Erro ao conectar ao servidor.');
     }
   }
+
+  const enviado = async(ordem:Ordens)=>{
+    const id = ordem.id
+    try {
+      const formData = { tokey,id};
   
+      const uploadResponse = await fetch(url + 'enviado', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const json = await uploadResponse.json();
+  
+      if (uploadResponse.ok) {
+          console.log('enviado:',json);
+          setOrdens(ordens.filter(i => i.id !== id));
+      } else {
+        console.error('Erro ao mudar ordem:', json);
+        Alert.alert('Erro', 'Erro ao mudar ordem');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar enviado:', error);
+      Alert.alert('Erro', 'Erro ao conectar ao servidor.');
+    }
+  }
 
 
   
@@ -173,7 +216,7 @@ export default function Index(){
             </View>
             {endereco ?(
             <View>
-            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push(`/mypurchases?tokey=${tokey}`)}}>
+            <TouchableOpacity style={{margin:20}} onPress={()=>{router.push('/mySales')}}>
             <Text>Minhas vendas</Text>
             </TouchableOpacity>
 
@@ -248,7 +291,37 @@ export default function Index(){
           </TouchableOpacity>
         </View>
         ):(
-      <View></View>
+            <View style={stylesp.produtosContainer}>
+              {ordens.length === 0 ? (
+                <Text style={stylesp.noProductText}>Nenhum venda encontrado.</Text>
+              ) : (
+                <ScrollView style={{width:330}}>
+                {ordens.map((ordem, index) => (
+                  <View key={index} style={stylesp.produtoCard}>
+                    <Text style={stylesp.produtoName}>produto:{ordem.name_pro}</Text>
+                    <TouchableOpacity onPress={() => handleProdutoPress(ordem)}>
+                     <View style={stylesp.produtoImageContainer}>
+                     <Text style={stylesp.produtbutontext}>Detalhes do produto</Text>
+                     </View>
+                    </TouchableOpacity>
+                    <Text style={{fontSize:18}}>enviar para:</Text>
+                    <Text style={stylesp.produtoName}>{ordem.name_cli}</Text>
+                    <Text style={stylesp.produtoName}>{ordem.email_cli}</Text><Text/>
+                    <Text style={{fontSize:18}}>cep:{ordem.cep_end}</Text>
+                    <Text style={{fontSize:18}}>endereço:</Text>
+                    <Text style={{fontSize:18}}> {ordem.uf_end},{ordem.cidade},{ordem.rua},{ordem.numero}</Text>
+                    <TouchableOpacity onPress={() => enviado(ordem)}>
+                     <View style={stylesp.produtoImageContainer}>
+                     <Text style={stylesp.produtbutontext}>produto encaminhado</Text>
+                     </View>
+                    </TouchableOpacity>
+
+                    
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+            </View>
       )}
     </SafeAreaView>
   );
@@ -383,3 +456,131 @@ const styles = StyleSheet.create({
   }
 });
 
+const stylesp = StyleSheet.create({
+  produtosContainer: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  noProductText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  produtoCard: {
+    width: 300,
+    height:350,
+    alignItems:'center',
+    marginVertical: 10,
+    marginHorizontal:20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  produtoName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  produtoDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  produtoQuantity: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  produtoValue: {
+    fontSize: 16,
+    color: '#0f0',
+    marginBottom: 10,
+  },
+  produtoImageContainer: {
+    width: 250,
+    height: 50,
+    borderRadius:15,
+    backgroundColor:'#afa',
+    alignItems:'center',
+    justifyContent:'center',
+    marginTop: 10,
+  },
+  produtoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  closeModalButton: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#ff4c4c',
+    borderRadius: 10,
+  },
+  closeModalText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  modalProductName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalProductDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  modalProductPrice: {
+    fontSize: 18,
+    color: '#0c0',
+    marginBottom: 20,
+  },
+  modalImagesContainer: {
+    marginBottom: 20,
+  },
+  modalProductImage: {
+    width: 200,
+    height: 200,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  addToCartButton: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#0f0',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  addToCartText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  buyButton: {
+    padding: 15,
+    backgroundColor: '#0a74da',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  buyButtonText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  produtbutontext: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color:'#0a0',
+    marginBottom: 5,
+  },
+});
