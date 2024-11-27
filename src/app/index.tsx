@@ -127,7 +127,7 @@ export default function Index(){
       const id = produto.id
       router.push({
           pathname: '/produto',
-          params: { chave:id },
+          params: { chave:id},
       });
       //setSelectedProduto(produto);
       //setModalVisible(true);

@@ -10,7 +10,7 @@ export default function produto (){
     const [selectedProduto, setSelectedProduto] = useState<Produto|null>(null);
     const [url, setUrl] = useState<string>('');
     const [tokey,setTokey] = useState<string>('')
-    const { chave } = useGlobalSearchParams()
+    const { chave ,vend } = useGlobalSearchParams()
 
     useEffect(() => {
         fetchConfigUrl()
@@ -115,10 +115,10 @@ export default function produto (){
                     </ScrollView>
                     <Text style={stylesp.modalProductPrice}>por R${selectedProduto.value.toFixed(2)}</Text>
                     <Text style={stylesp.modalProductDescription}>Disponivel em estoque: {selectedProduto.quantity}</Text>
-                    
+                    {!vend&&
                     <TouchableOpacity style={styles.botonNC} onPress={() => { addcart() }}>
                     <Text style={{ color: '#10d010', fontSize: 30 }}>adicionar ao carrinho</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>}
                     
                     <Text style={stylesp.modalProductDescription}>Descrição do produto: {selectedProduto.description}</Text>
 
