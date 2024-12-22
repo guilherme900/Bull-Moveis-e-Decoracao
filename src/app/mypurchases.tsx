@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet,ScrollView, View, Image,Alert, TextInput, TouchableOpacity, Text } from 'react-native';
 import { useUserDatabase } from '@/database/useUserDatabase';
 import {readConfigFile} from '@/app/login';
-import { Produto } from '@/app/myProducts';
 export type Response={
     valor:number;
     data:string;
@@ -30,6 +29,7 @@ const SearchScreen = () => {
     useEffect(() => {
     if(url&&tokey){fetchcompras()}
     },[url,tokey]);
+
 
     const fetchUserTokey = async () => {
         const response = await UserDatabase.serchByuse(1);
@@ -89,11 +89,14 @@ const SearchScreen = () => {
               <ScrollView style={{width:330}}>
               {results.map((produto, index) => (
                 <View key={index} style={stylesp.produtoCard}>
+                  <Text style={stylesp.produtoName}>{produto.nome_produto}</Text>
                   <TouchableOpacity onPress={() => handleProdutoPress(produto)} style={stylesp.produtoImageContainer}>
                     <Image source={{ uri: produto.image }} style={stylesp.produtoImage} />
                   </TouchableOpacity>
-                  <Text style={stylesp.produtoName}>{produto.nome_produto}</Text>
-                  <Text style={stylesp.produtoValue}>Preço: R${produto.valor.toFixed(2)}</Text>
+                  
+                  <Text style={stylesp.produtoName}>Data da conpro:</Text>
+                  <Text style={stylesp.produtoName}>{produto.data}</Text>
+                  <Text style={stylesp.produtoName}>Preço: R${produto.valor}</Text>
                   
                 </View>
               ))}
@@ -297,7 +300,7 @@ const stylesp = StyleSheet.create({
   },
   produtoImageContainer: {
     width: 250,
-    height: 250,
+    height: 210,
     marginTop: 10,
   },
   produtoImage: {

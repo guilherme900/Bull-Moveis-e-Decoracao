@@ -108,7 +108,11 @@ export default function Index(){
       const json: Produto[] = await uploadResponse.json();
       
       if (uploadResponse.ok) {
-        setProdutos(json);
+        if(json && Array.isArray(json) && json.length > 0){
+        setProdutos(json);}
+        else{
+          console.log(json)
+        }
       } else {
         console.error('Erro ao obter produtos:', json);
         Alert.alert('Erro', 'Erro ao carregar produtos.');
